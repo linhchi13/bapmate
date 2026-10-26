@@ -1,0 +1,15 @@
+# 원본 공공데이터는 용량이 커서(300MB) 저장소에 올리지 않는다. scripts/01 로 다시 받을 수 있다.
+data/raw/
+data/*.bak
+data/_test*/
+# 로컬 개발용 회원·평가 데이터 (배포 시에는 Google Sheets 사용)
+data/members.csv
+data/reviews.csv
+data/favorites.csv
+# 비밀 키 - 절대 올리지 않기
+.streamlit/secrets.toml
+.streamlit/secrets_cloud.toml
+.streamlit/cookie_secret.txt
+*.json.key
+__pycache__/
+.venv/
