@@ -48,5 +48,8 @@ if QUALITY_REPORT.exists():
 st.markdown(f"#### {t('about.limits_title')}")
 st.markdown(t("about.limits"))
 
+st.markdown(f"#### {t('about.privacy_title')}")
+st.markdown(t("about.privacy"))
+
 st.markdown(f"#### {t('about.team_title')}")
 st.dataframe(pd.DataFrame(TEAM, columns=[t("about.name"), t("about.student_id")]), hide_index=True)
