@@ -1,0 +1,76 @@
+{
+  "built_at": "2026-10-26 16:15",
+  "raw_rows_seoul": 554092,
+  "food_rows_seoul": 125003,
+  "missing_coordinates": 0,
+  "within_radius": 1210,
+  "duplicates_removed": 5,
+  "good_price": {
+    "rows_in_districts": 42,
+    "matched": 9,
+    "unmatched": [
+      "후문식당",
+      "영차",
+      "꽃제비칼국수",
+      "옛날통닭",
+      "엄니랑딸래미",
+      "우이동멸치국수",
+      "수락산할매집",
+      "일번지국수",
+      "상계동갈비",
+      "밀레니엄 김밥",
+      "조아애떡볶이",
+      "상계돈집",
+      "청주삼겹살",
+      "해담",
+      "포샌",
+      "언제나오고가식당",
+      "대원아구찜칼국수",
+      "이조모밀",
+      "별미밥상",
+      "락궁",
+      "피노키오",
+      "윤호네착한메밀",
+      "옹골면",
+      "여자만아구찜",
+      "손맛집",
+      "새싹보리밥",
+      "메밀꽃",
+      "마떡다이천",
+      "마들김밥",
+      "돈장군",
+      "짬뽕늬우스",
+      "마시차이나",
+      "은행빵집"
+    ],
+    "invalid_or_empty_prices": 0
+  },
+  "osm": {
+    "elements": 235,
+    "matched": 129
+  },
+  "manual": {
+    "store_info_rows": 0,
+    "menu_price_rows": 0
+  },
+  "output_rows": 1205,
+  "by_cuisine": {
+    "korean": 445,
+    "cafe": 309,
+    "fastfood": 143,
+    "bunsik": 85,
+    "japanese": 70,
+    "western": 66,
+    "chinese": 44,
+    "etc": 16,
+    "buffet": 14,
+    "vietnamese": 12,
+    "asian": 1
+  },
+  "missing_values": {
+    "name_en": 1198,
+    "price_min": 1197,
+    "open_hours": 1204,
+    "image_path": 1205
+  }
+}
