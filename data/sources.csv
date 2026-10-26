@@ -1,0 +1,4 @@
+﻿source_name,url,file,collected_at,note
+소상공인시장진흥공단_상가(상권)정보,https://www.data.go.kr/data/15083033/fileData.do,stores_seoul.csv,2026-10-26 16:04,기준일 06/30/2026 / 소상공인시장진흥공단_상가(상권)정보_20260630
+행정안전부_착한가격업소 현황,https://www.data.go.kr/data/3045247/fileData.do,good_price.csv,2026-10-26 16:04,기준일 09/30/2026 / 행정안전부_착한가격업소 현황_20260930
+OpenStreetMap (Overpass API),https://www.openstreetmap.org/copyright,osm_food.json,2026-10-26 16:05,"반경 1500m 음식점·카페 235건, ODbL"
