@@ -224,6 +224,8 @@
   "about.quality_title": "데이터 처리 결과",
   "about.limits_title": "알아 두세요",
   "about.limits": "- 가게 목록은 공공데이터 기준일 시점의 정보로, 그 뒤 폐업·이전했을 수 있어요.\n- 거리는 직선거리이며 도보 시간은 추정값이에요.\n- 가격은 착한가격업소 데이터, 팀 현장 조사, 학생 제보가 있는 가게만 표시해요.\n- 평점과 혼밥·모임 추천은 이 앱에서 학생들이 남긴 평가로만 계산해요.",
+  "about.privacy_title": "개인정보 처리방침 (Privacy Policy)",
+  "about.privacy": "- **수집 항목:** Google 계정 고유번호(SHA-256 으로 변환해 저장), 회원이 직접 정한 닉네임·국적(선택), 회원이 남긴 평가·즐겨찾기\n- **수집하지 않는 항목:** 이메일, 실명, 비밀번호, 연락처, 위치\n- **이용 목적:** 회원 식별, 즐겨찾기 저장, 가게 평가 집계\n- **보관 기간:** 회원 탈퇴 시 즉시 모두 삭제 (마이페이지 → 회원 탈퇴)\n- **제3자 제공:** 하지 않음\n- **운영:** 서울과학기술대학교 4조 학생 프로젝트\n\nWe store only a hashed Google account ID, a self-chosen nickname, optional nationality, and the user's reviews/favorites. No email, name or password is stored. All data is deleted on account withdrawal.",
   "about.team_title": "만든 사람들 · 4조",
   "about.name": "이름",
   "about.student_id": "학번",
