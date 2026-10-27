@@ -9,9 +9,10 @@ import pandas as pd
 import streamlit as st
 
 from src.auth import current_member, current_user_id, favorite_ids, login_button, members_table, set_favorite
-from src.config import CUISINE_COLOR, CUISINE_ICON, CUISINE_IMAGES_DIR, IMAGES_DIR, MIN_VOTES, MIN_YES_RATIO
+from src.config import CUISINE_COLOR, IMAGES_DIR, MIN_VOTES, MIN_YES_RATIO
 from src.data import get_data, load_reviews, save_review
 from src.i18n import cuisine_label, t
+from src.illustrations import illustration_key, illustration_uri
 
 PRIMARY = "#F26B3A"
 
@@ -118,15 +119,14 @@ def _img_data_uri(path: str) -> str:
 
 
 def _thumb_html(r: pd.Series) -> str:
-    """사진 우선순위: ① 팀이 직접 찍은 가게 사진 → ② 음식 종류별 예시 이미지 → ③ 아이콘."""
+    """사진 우선순위: ① 팀이 직접 찍은 가게 사진 → ② 음식 종류·세부 업종별 일러스트(예시 이미지)."""
     color = CUISINE_COLOR.get(r["cuisine"], "#6B7280")
-    inner = CUISINE_ICON.get(r["cuisine"], "🍴")
     own = IMAGES_DIR / str(r["image_path"]) if has(r.get("image_path")) else None
-    sample = CUISINE_IMAGES_DIR / f"{r['cuisine']}.jpg"
     if own is not None and own.exists():
         inner = f'<img src="{_img_data_uri(str(own))}" alt="">'
-    elif sample.exists():
-        inner = (f'<img src="{_img_data_uri(str(sample))}" alt="">'
+    else:
+        key = illustration_key(r["cuisine"], r.get("category_sub"))
+        inner = (f'<img src="{illustration_uri(key)}" alt="">'
                  f'<span class="bm-sample">{t("common.sample_image")}</span>')
     badge = f'<span class="bm-badge">{t("common.good_price")}</span>' if r["good_price"] else ""
     fav = '<span class="bm-fav">❤️</span>' if r["id"] in favorites() else ""
