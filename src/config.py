@@ -7,7 +7,8 @@ RESTAURANTS_CSV = DATA_DIR / "restaurants.csv"
 SOURCES_CSV = DATA_DIR / "sources.csv"
 QUALITY_REPORT = DATA_DIR / "quality_report.json"
 MANUAL_DIR = DATA_DIR / "manual"
-IMAGES_DIR = ROOT / "assets" / "images"
+IMAGES_DIR = ROOT / "assets" / "images"            # 팀이 직접 찍은 가게 사진
+CUISINE_IMAGES_DIR = ROOT / "assets" / "cuisine"    # 음식 종류별 예시 이미지 (Wikimedia Commons)
 
 # 서울과학기술대학교 기준 좌표: 학교 공식 주소(공릉로 232)의 좌표.
 # 상가(상권)정보에서 '서울특별시 노원구 공릉로 232' 주소를 가진 업소의 위도·경도 값을 사용했다.
