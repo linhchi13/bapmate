@@ -23,17 +23,22 @@ except DataError as e:
             "python scripts/03_build_dataset.py", language="bash")
     st.stop()
 
-pages = [
-    st.Page("views/home.py", title=t("nav.home"), icon="🔎", default=True),
-    st.Page("views/budget.py", title=t("nav.budget"), icon="💰"),
-    st.Page("views/themes.py", title=t("nav.themes"), icon="📂"),
-    st.Page("views/stats.py", title=t("nav.stats"), icon="📊"),
-    st.Page("views/favorites.py", title=t("nav.favorites"), icon="❤️"),
-    st.Page("views/mypage.py", title=t("nav.mypage"), icon="👤"),
-    st.Page("views/about.py", title=t("nav.about"), icon="ℹ️"),
-]
+# 메뉴: 3개 묶음. (about 페이지 주소 /about 은 Google 에 개인정보 처리방침 링크로 등록되어 있으니 바꾸지 말 것)
+pages = {
+    t("nav.section_food"): [
+        st.Page("views/home.py", title=t("nav.home"), icon="🔎", default=True),
+        st.Page("views/themes.py", title=t("nav.themes"), icon="📂"),
+    ],
+    t("nav.section_me"): [
+        st.Page("views/mypage.py", title=t("nav.mypage"), icon="👤"),
+    ],
+    t("nav.section_info"): [
+        st.Page("views/stats.py", title=t("nav.stats"), icon="📊"),
+        st.Page("views/about.py", title=t("nav.about"), icon="ℹ️"),
+    ],
+}
 if is_admin():  # 관리자에게만 메뉴가 보인다
-    pages.append(st.Page("views/admin.py", title=t("nav.admin"), icon="🛠️"))
+    pages[t("nav.section_admin")] = [st.Page("views/admin.py", title=t("nav.admin"), icon="🛠️")]
 nav = st.navigation(pages)
 st.sidebar.markdown(f"### 🍚 {t('app.name')}\n{t('app.name_en')}")
 st.sidebar.caption(t("app.tagline"))
