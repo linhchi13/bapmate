@@ -214,8 +214,9 @@ def render_grid(df: pd.DataFrame, key: str, page_size: int = 12, cols: int = 3, 
 
 
 # ---------------------------------------------------------------- 지도
-def render_map(df: pd.DataFrame, height: int = 520) -> None:
-    """Plotly 지도(무료 Carto 배경지도, API 키 불필요). 색은 음식 종류별."""
+def render_map(df: pd.DataFrame, height: int = 520, key: str = "map") -> None:
+    """Plotly 지도(무료 Carto 배경지도, API 키 불필요). 색은 음식 종류별.
+    가게 점을 누르면 그 가게의 상세 창이 열린다."""
     import plotly.graph_objects as go
 
     from src.config import CAMPUS_LAT, CAMPUS_LON, CUISINE_ORDER
@@ -228,10 +229,12 @@ def render_map(df: pd.DataFrame, height: int = 520) -> None:
         price = part["budget_price"].map(lambda p: fmt_won(p) if pd.notna(p) else t("common.no_price"))
         fig.add_trace(go.Scattermap(
             lat=part["lat"], lon=part["lon"], mode="markers",
-            marker=dict(size=10, color=CUISINE_COLOR[key], opacity=.85),
+            marker=dict(size=11, color=CUISINE_COLOR[key], opacity=.85),
+            selected=dict(marker=dict(opacity=1)), unselected=dict(marker=dict(opacity=.85)),  # 누른 뒤에도 흐려지지 않게
             name=cuisine_label(key),
-            customdata=list(zip(part["name"], part["distance_m"], price)),
-            hovertemplate="<b>%{customdata[0]}</b><br>%{customdata[1]}m · %{customdata[2]}<extra></extra>",
+            customdata=list(zip(part["name"], part["distance_m"], price, part["id"])),
+            hovertemplate=("<b>%{customdata[0]}</b><br>%{customdata[1]}m · %{customdata[2]}"
+                           f"<br><i>{t('common.map_click')}</i><extra></extra>"),
         ))
     fig.add_trace(go.Scattermap(
         lat=[CAMPUS_LAT], lon=[CAMPUS_LON], mode="markers+text", name=t("stats.campus"),
@@ -243,7 +246,19 @@ def render_map(df: pd.DataFrame, height: int = 520) -> None:
         height=height, margin=dict(l=0, r=0, t=0, b=0),
         legend=dict(orientation="h", yanchor="bottom", y=0.01, xanchor="left", x=0.01, bgcolor="rgba(255,255,255,.85)"),
     )
-    st.plotly_chart(fig, width="stretch", config={"scrollZoom": True, "displayModeBar": False})
+    fig.update_layout(clickmode="event+select")
+    # 상세 창을 연 뒤에는 지도 key 를 바꿔 선택 상태를 초기화한다 → 같은 점을 다시 눌러도 또 열림
+    version = st.session_state.get(f"{key}_v", 0)
+    event = st.plotly_chart(fig, width="stretch", config={"scrollZoom": True, "displayModeBar": False},
+                            on_select="rerun", selection_mode="points", key=f"{key}_{version}")
+
+    # 점을 누르면 그 가게의 상세 창 열기
+    points = event.get("selection", {}).get("points", []) if event else []
+    store_id = next((str(p["customdata"][3]) for p in points
+                     if p.get("customdata") and len(p["customdata"]) >= 4), None)
+    if store_id:
+        st.session_state[f"{key}_v"] = version + 1
+        show_detail(store_id)
 
 
 # ---------------------------------------------------------------- 상세 창
