@@ -107,7 +107,14 @@ try:
     check("review aggregate", row["rating_count"] == 3 and abs(row["rating_avg"] - 13 / 3) < 1e-9)
     check("solo verified after 3 yes votes", bool(row["solo_verified"]) and not bool(row["group_verified"]))
 
-    # 7) 마이페이지 → 탈퇴하면 이 회원의 기록이 모두 지워짐
+    # 7) 관리자 페이지: 현황 표시 + 후기 삭제
+    at.switch_page("views/admin.py").run()
+    check("admin page opens", not at.exception and any(m.label == "전체 회원" and m.value == "1" for m in at.metric),
+          [e.value for e in at.exception])
+    button(at, "삭제").click().run()
+    check("admin deletes a review", len(load_reviews()) == 2)
+
+    # 8) 마이페이지 → 탈퇴하면 이 회원의 기록이 모두 지워짐
     at.switch_page("views/mypage.py").run()
     check("mypage opens for member", not at.exception and any(m.value == "공릉먹방러" for m in at.metric))
     button(at, "네, 탈퇴할게요").click().run()
