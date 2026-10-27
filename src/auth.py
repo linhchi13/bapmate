@@ -42,6 +42,21 @@ def current_user_id() -> str | None:
     return st.session_state.get("dev_user_id") if dev_login_allowed() else None
 
 
+def is_admin() -> bool:
+    """관리자 여부.
+    - Google 로그인: secrets.toml 의 [admin] emails 목록에 로그인한 Gmail 이 있으면 관리자
+      (이메일은 비교에만 쓰고 저장하지 않는다)
+    - 내 컴퓨터의 테스트 로그인: 시연을 위해 누구나 관리자
+    """
+    if google_enabled():
+        if not st.user.get("is_logged_in", False):
+            return False
+        conf = secret_section("admin") or {}
+        admins = {str(e).strip().lower() for e in conf.get("emails", [])}
+        return str(st.user.get("email", "")).strip().lower() in admins
+    return dev_login_allowed() and current_user_id() is not None
+
+
 def get_member(user_id: str | None) -> dict | None:
     if not user_id:
         return None
