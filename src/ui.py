@@ -1,13 +1,15 @@
 """화면 구성 요소: 스타일, 가게 카드, 상세 창, 지도 링크, 즐겨찾기."""
 import base64
 import html
+from functools import lru_cache
+from pathlib import Path
 from urllib.parse import quote
 
 import pandas as pd
 import streamlit as st
 
 from src.auth import current_member, current_user_id, favorite_ids, login_button, members_table, set_favorite
-from src.config import CUISINE_COLOR, CUISINE_ICON, IMAGES_DIR, MIN_VOTES, MIN_YES_RATIO
+from src.config import CUISINE_COLOR, CUISINE_ICON, CUISINE_IMAGES_DIR, IMAGES_DIR, MIN_VOTES, MIN_YES_RATIO
 from src.data import get_data, load_reviews, save_review
 from src.i18n import cuisine_label, t
 
@@ -39,8 +41,12 @@ CSS = f"""
   .bm-hero h1 {{ font-size: 1.55rem; }}
   .bm-hero .bm-stat {{ font-size: .8rem; }}
 }}
+.bm-sample {{
+  position: absolute; bottom: 6px; right: 8px; background: rgba(0,0,0,.45); color: #fff;
+  font-size: .66rem; padding: 1px 7px; border-radius: 999px;
+}}
 .bm-thumb {{
-  height: 104px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  height: 128px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
   font-size: 44px; position: relative; overflow: hidden;
 }}
 .bm-thumb img {{ width: 100%; height: 100%; object-fit: cover; }}
@@ -103,15 +109,25 @@ def map_links(r: pd.Series) -> dict:
     return links
 
 
+@lru_cache(maxsize=256)
+def _img_data_uri(path: str) -> str:
+    """이미지 파일 → HTML 에 바로 넣을 수 있는 data URI (같은 사진은 한 번만 읽음)."""
+    p = Path(path)
+    mime = "image/png" if p.suffix.lower() == ".png" else "image/jpeg"
+    return f"data:{mime};base64,{base64.b64encode(p.read_bytes()).decode()}"
+
+
 def _thumb_html(r: pd.Series) -> str:
+    """사진 우선순위: ① 팀이 직접 찍은 가게 사진 → ② 음식 종류별 예시 이미지 → ③ 아이콘."""
     color = CUISINE_COLOR.get(r["cuisine"], "#6B7280")
     inner = CUISINE_ICON.get(r["cuisine"], "🍴")
-    if has(r.get("image_path")):
-        path = IMAGES_DIR / str(r["image_path"])
-        if path.exists():
-            b64 = base64.b64encode(path.read_bytes()).decode()
-            mime = "image/png" if path.suffix.lower() == ".png" else "image/jpeg"
-            inner = f'<img src="data:{mime};base64,{b64}" alt="">'
+    own = IMAGES_DIR / str(r["image_path"]) if has(r.get("image_path")) else None
+    sample = CUISINE_IMAGES_DIR / f"{r['cuisine']}.jpg"
+    if own is not None and own.exists():
+        inner = f'<img src="{_img_data_uri(str(own))}" alt="">'
+    elif sample.exists():
+        inner = (f'<img src="{_img_data_uri(str(sample))}" alt="">'
+                 f'<span class="bm-sample">{t("common.sample_image")}</span>')
     badge = f'<span class="bm-badge">{t("common.good_price")}</span>' if r["good_price"] else ""
     fav = '<span class="bm-fav">❤️</span>' if r["id"] in favorites() else ""
     return (f'<div class="bm-thumb" style="background: linear-gradient(135deg, {color}22, {color}55);">'
