@@ -4,7 +4,7 @@
 """
 import streamlit as st
 
-from src.auth import current_member, current_user_id, sidebar_account, signup_form
+from src.auth import current_member, current_user_id, is_admin, sidebar_account, signup_form
 from src.data import DataError, load_restaurants
 from src.i18n import t
 from src.ui import inject_css, show_pending_toast
@@ -32,6 +32,8 @@ pages = [
     st.Page("views/mypage.py", title=t("nav.mypage"), icon="👤"),
     st.Page("views/about.py", title=t("nav.about"), icon="ℹ️"),
 ]
+if is_admin():  # 관리자에게만 메뉴가 보인다
+    pages.append(st.Page("views/admin.py", title=t("nav.admin"), icon="🛠️"))
 nav = st.navigation(pages)
 st.sidebar.markdown(f"### 🍚 {t('app.name')}\n{t('app.name_en')}")
 st.sidebar.caption(t("app.tagline"))
