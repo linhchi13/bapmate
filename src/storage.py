@@ -55,10 +55,14 @@ class CsvStorage:
         new = pd.DataFrame([{c: row.get(c, "") for c in TABLES[table]}])
         new.to_csv(path, mode="a", header=not path.exists(), index=False, encoding="utf-8")
 
+    def delete_where(self, table: str, column: str, value: str) -> None:
+        """column 값이 value 인 줄을 모두 지운다."""
+        df = self.read(table)
+        df[df[column] != value].to_csv(self._path(table), index=False, encoding="utf-8")
+
     def delete_user(self, user_id: str) -> None:
         for table in TABLES:
-            df = self.read(table)
-            df[df["user_id"] != user_id].to_csv(self._path(table), index=False, encoding="utf-8")
+            self.delete_where(table, "user_id", user_id)
 
 
 class SheetsStorage:
@@ -92,14 +96,17 @@ class SheetsStorage:
     def append(self, table: str, row: dict) -> None:
         self._sheet(table).append_row([str(row.get(c, "")) for c in TABLES[table]], value_input_option="RAW")
 
+    def delete_where(self, table: str, column: str, value: str) -> None:
+        ws = self._sheet(table)
+        values = ws.get_all_values()
+        col = values[0].index(column)
+        rows = [i + 1 for i, v in enumerate(values) if i > 0 and v[col] == value]
+        for r in reversed(rows):  # 아래 줄부터 지워야 줄 번호가 밀리지 않음
+            ws.delete_rows(r)
+
     def delete_user(self, user_id: str) -> None:
         for table in TABLES:
-            ws = self._sheet(table)
-            values = ws.get_all_values()
-            col = values[0].index("user_id")
-            rows = [i + 1 for i, v in enumerate(values) if i > 0 and v[col] == user_id]
-            for r in reversed(rows):  # 아래 줄부터 지워야 줄 번호가 밀리지 않음
-                ws.delete_rows(r)
+            self.delete_where(table, "user_id", user_id)
 
 
 class HubStorage(CsvStorage):
@@ -139,10 +146,15 @@ class HubStorage(CsvStorage):
             super().append(table, row)
             self._push(table, f"add {table}")
 
+    def delete_where(self, table: str, column: str, value: str) -> None:
+        with self.lock:
+            super().delete_where(table, column, value)
+            self._push(table, f"delete from {table}")
+
     def delete_user(self, user_id: str) -> None:
         with self.lock:
-            super().delete_user(user_id)
             for table in TABLES:
+                CsvStorage.delete_where(self, table, "user_id", user_id)
                 self._push(table, "delete user")
 
 
@@ -168,4 +180,9 @@ def append_row(table: str, row: dict) -> None:
 
 def delete_user_data(user_id: str) -> None:
     get_storage().delete_user(user_id)
+    read_table.clear()
+
+
+def delete_rows(table: str, column: str, value: str) -> None:
+    get_storage().delete_where(table, column, value)
     read_table.clear()
