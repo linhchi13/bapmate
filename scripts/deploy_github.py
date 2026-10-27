@@ -53,7 +53,18 @@ def main() -> None:
         changed += 1
         print("  ↑", rel)
 
-    print(f"\n완료: 파일 {len(files)}개 중 {changed}개 업로드")
+    # 내 컴퓨터에서 지운 파일은 GitHub 에서도 지운다
+    local = {p.relative_to(ROOT).as_posix() for p in files}
+    tree = s.get(f"{API}/repos/{owner}/{REPO}/git/trees/main?recursive=1", timeout=30).json().get("tree", [])
+    removed = 0
+    for item in tree:
+        if item["type"] == "blob" and item["path"] not in local:
+            s.delete(f"{API}/repos/{owner}/{REPO}/contents/{item['path']}",
+                     json={"message": f"remove {item['path']}", "sha": item["sha"]}, timeout=30)
+            removed += 1
+            print("  ✕", item["path"])
+
+    print(f"\n완료: 파일 {len(files)}개 중 {changed}개 업로드, {removed}개 삭제")
     print(f"저장소: https://github.com/{owner}/{REPO}")
 
 
