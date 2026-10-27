@@ -4,8 +4,8 @@ import json
 import pandas as pd
 import streamlit as st
 
-from src.config import QUALITY_REPORT, SOURCES_CSV
-from src.i18n import t
+from src.config import CUISINE_IMAGES_DIR, QUALITY_REPORT, SOURCES_CSV
+from src.i18n import cuisine_label, t
 from src.ui import page_header
 
 TEAM = [
@@ -47,6 +47,15 @@ if QUALITY_REPORT.exists():
 
 st.markdown(f"#### {t('about.limits_title')}")
 st.markdown(t("about.limits"))
+
+credits_csv = CUISINE_IMAGES_DIR / "credits.csv"
+if credits_csv.exists():
+    st.markdown(f"#### {t('about.images_title')}")
+    st.write(t("about.images"))
+    cr = pd.read_csv(credits_csv)
+    cr["cuisine"] = cr["cuisine"].map(cuisine_label)
+    st.dataframe(cr[["cuisine", "title", "artist", "license", "source_url"]], hide_index=True, width="stretch",
+                 column_config={"source_url": st.column_config.LinkColumn("source")})
 
 st.markdown(f"#### {t('about.privacy_title')}")
 st.markdown(t("about.privacy"))
