@@ -123,7 +123,7 @@ with c6:
         st.plotly_chart(style(fig), width="stretch")
 
 st.markdown(f"#### {t('stats.map')}")
-render_map(data, height=460)
+render_map(data, height=460, key="stats_map")
 
 with st.expander(t("stats.table")):
     cols = ["name", "cuisine_label", "category_sub", "area", "distance_m", "budget_price", "rating_avg", "rating_count"]
