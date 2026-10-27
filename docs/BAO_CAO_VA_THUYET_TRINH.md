@@ -155,12 +155,13 @@ Xây dựng một website giúp sinh viên quốc tế SeoulTech **tìm quán ă
   → 추측하지 않고, 학생 3명 이상이 응답하고 60% 이상이 '좋다'고 답한 가게만 보여 줍니다.
 
 ## 13. Gợi ý kịch bản demo (5 phút)
-1. Trang chủ: gõ "쌀국수" → ra các quán Việt → bấm 자세히 → bấm "카카오맵 길찾기".
-2. 예산으로 찾기: nhập 6.000 won → các quán 착한가격 hiện ra, có giá thật.
-3. 테마별 추천 → "혼밥" đang trống → giải thích vì sao không tự đoán.
-4. Đánh giá thử một quán 3 lần (chọn "혼밥 예") → quán xuất hiện trong theme 혼밥.
-5. 데이터 분석: lọc theo loại món, giải thích biểu đồ.
-6. 데이터 출처: bảng nguồn và các bước xử lý.
+1. **맛집 찾기:** gõ "쌀국수" → hiện các quán Việt → bấm 자세히 → bấm "카카오맵 길찾기".
+2. **맛집 찾기 → 💰 1인 예산:** chọn "8,000원 이하" → các quán 착한가격 hiện ra kèm giá thật.
+3. **테마별 추천:** các chủ đề 혼밥 / 친구와 / 평점 chưa hiện. Giải thích: web không tự đoán, phải có ≥3 sinh viên đánh giá thì chủ đề mới tự mở.
+4. **Đăng nhập Gmail → đặt nickname** → bấm ♡ 저장 một quán → đánh giá quán đó → vào **마이페이지** xem tab 즐겨찾기 và 내 평가.
+5. **데이터 분석:** lọc theo loại món, giải thích các biểu đồ.
+6. **서비스 소개·개인정보:** bảng nguồn dữ liệu, các bước xử lý, chính sách bảo mật.
+7. (Nếu có thời gian) **🛠️ 관리자:** số hội viên, biểu đồ đăng ký, quản lý đánh giá. Chỉ tài khoản quản trị mới thấy mục này.
 
 ## 14. Triển khai lên mạng (배포) – Streamlit Community Cloud, miễn phí
 1. Tạo repo GitHub, push thư mục `seoultech_food` (thư mục `data/raw` đã nằm trong `.gitignore`, nhưng **phải push `data/restaurants.csv`**).
