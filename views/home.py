@@ -59,6 +59,6 @@ st.markdown(f"**{t('common.results', n=len(result))}**")
 if budget:
     st.caption("💡 " + t("home.budget_note", n=int(df["budget_price"].notna().sum())))
 if view == "map":
-    render_map(result)
+    render_map(result, key="home_map")
 else:
     render_grid(result, "home", reset_on=(query, tuple(cuisines), budget, area, max_walk, sort_by, include_cafe))
