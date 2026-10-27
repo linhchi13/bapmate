@@ -18,8 +18,7 @@ from src import config, storage  # noqa: E402
 from src.filters import apply_filters, price_band, search  # noqa: E402
 
 APP = str(ROOT / "app.py")
-PAGES = ["views/home.py", "views/budget.py", "views/themes.py", "views/stats.py",
-         "views/favorites.py", "views/mypage.py", "views/about.py"]
+PAGES = ["views/home.py", "views/themes.py", "views/stats.py", "views/mypage.py", "views/about.py"]
 failures = []
 
 # 테스트용 임시 저장소로 바꿔치기
@@ -59,6 +58,14 @@ try:
     at.text_input(key="home_q").input("zzzz없는가게").run()
     md = " ".join(m.value for m in at.markdown)
     check("search no result shows empty state", "조건에 맞는 가게가 없어요" in md)
+    at.text_input(key="home_q").input("").run()
+    at.pills(key="home_budget").set_value("low").run()
+    md = " ".join(m.value for m in at.markdown)
+    from src.data import get_data as _gd  # noqa: E402
+    _d = _gd()
+    expected = int(((_d["budget_price"] <= 8000) & (_d["cuisine"] != "cafe")).sum())  # 홈은 기본으로 카페 제외
+    check("home budget filter (8,000원 이하, 카페 제외)", f"**{expected}곳**" in md and not at.exception,
+          [m.value for m in at.markdown if "곳**" in m.value])
 
     # 3) 필터 함수
     from src.data import _clean_price, get_data, load_reviews, save_review  # noqa: E402
@@ -91,8 +98,9 @@ try:
     first_save.click().run()
     fav = storage.read_table("favorites")
     check("favorite saved", len(fav) == 1 and fav.iloc[0]["action"] == "add")
-    at.switch_page("views/favorites.py").run()
-    check("favorites page lists store", any("1곳" in m.value for m in at.markdown), [e.value for e in at.exception])
+    at.switch_page("views/mypage.py").run()
+    check("mypage favorites tab lists store", not at.exception and any(m.label == "즐겨찾기" and m.value == "1" for m in at.metric),
+          [e.value for e in at.exception])
 
     # 6) 평가: 같은 회원이 같은 가게를 다시 평가하면 마지막 것만 반영
     uid = members.iloc[0]["user_id"]
