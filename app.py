@@ -6,11 +6,26 @@ import streamlit as st
 
 from src.auth import current_member, current_user_id, is_admin, sidebar_account, signup_form
 from src.data import DataError, load_restaurants
-from src.i18n import t
+from src.i18n import LANGUAGES, current_lang, t
 from src.ui import inject_css, show_pending_toast
+
+# 언어: 처음 들어오면 주소의 ?lang= 값(없으면 한국어)으로 시작
+if "lang" not in st.session_state:
+    st.session_state["lang"] = current_lang()
 
 st.set_page_config(page_title=f"{t('app.name')} · {t('app.name_en')}", page_icon="🍚", layout="wide")
 inject_css()
+
+# ---- 화면 맨 위 오른쪽: 언어 전환 버튼 (선택한 언어는 주소에도 남겨서 새로고침해도 유지)
+def _set_lang(code: str) -> None:
+    st.session_state["lang"] = code
+
+
+with st.container(key="langbar", horizontal=True):
+    for code, label in LANGUAGES.items():
+        st.button(label, key=f"lang_{code}", on_click=_set_lang, args=(code,),
+                  type="primary" if st.session_state["lang"] == code else "secondary")
+st.query_params["lang"] = st.session_state["lang"]
 
 # 데이터 파일 검사: 없거나 형식이 틀리면 안내를 보여 주고 멈춘다
 try:
