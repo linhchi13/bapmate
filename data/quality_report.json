@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-10-26 16:15",
+  "built_at": "2026-10-28 10:34",
   "raw_rows_seoul": 554092,
   "food_rows_seoul": 125003,
   "missing_coordinates": 0,
@@ -50,8 +50,8 @@
     "matched": 129
   },
   "manual": {
-    "store_info_rows": 0,
-    "menu_price_rows": 0
+    "store_info_rows": 16,
+    "menu_price_rows": 93
   },
   "output_rows": 1205,
   "by_cuisine": {
@@ -68,9 +68,9 @@
     "asian": 1
   },
   "missing_values": {
-    "name_en": 1198,
-    "price_min": 1197,
-    "open_hours": 1204,
+    "name_en": 1197,
+    "price_min": 1178,
+    "open_hours": 1188,
     "image_path": 1205
   }
 }
