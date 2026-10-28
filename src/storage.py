@@ -19,6 +19,9 @@ TABLES = {
     "reviews": ["review_id", "user_id", "store_id", "stars", "solo_ok", "group_ok", "price_paid",
                 "comment", "created_at"],
     "favorites": ["user_id", "store_id", "action", "created_at"],
+    # 가게 정보 수정: 팀 현장 조사(바로 반영) 또는 회원 제보(관리자 승인 후 반영)
+    # 같은 update_id 가 여러 줄이면 마지막 줄의 status 가 최종 상태 (pending → approved / rejected)
+    "store_updates": ["update_id", "user_id", "store_id", "menus", "open_hours", "source", "status", "created_at"],
 }
 
 
