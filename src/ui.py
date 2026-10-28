@@ -20,16 +20,53 @@ PRIMARY = "#F26B3A"
 CSS = f"""
 <style>
 .block-container {{ padding-top: 2.2rem; max-width: 1180px; }}
-.bm-hero {{
-  background: linear-gradient(135deg, {PRIMARY} 0%, #FF9A5A 60%, #FFC56E 100%);
-  border-radius: 22px; padding: 26px 28px; color: #fff; margin-bottom: 18px;
-  box-shadow: 0 10px 30px rgba(242,107,58,.25);
+/* ---- 홈 배너 (밝은 크림·피치 배경) */
+.st-key-hero {{
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 110%, rgba(255,255,255,.55) 0 90px, transparent 91px),
+    radial-gradient(circle at 92% -10%, rgba(255,255,255,.35) 0 120px, transparent 121px),
+    linear-gradient(120deg, #FFE4D0 0%, #FFCFAE 55%, #FFBE93 100%);
+  border-radius: 26px; padding: 22px 26px 18px; margin-bottom: 6px;
+  box-shadow: 0 10px 26px rgba(242,107,58,.18);
 }}
-.bm-hero h1 {{ color: #fff; font-size: 2rem; margin: 0; padding: 0; font-weight: 800; }}
-.bm-hero p {{ margin: 6px 0 0; opacity: .95; font-size: 1rem; }}
-.bm-hero .bm-stats {{ display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }}
-.bm-hero .bm-stat {{ background: rgba(255,255,255,.2); border-radius: 12px; padding: 6px 12px; font-size: .9rem; }}
-.bm-hero .bm-stat b {{ font-size: 1.1rem; }}
+/* 스티커: 배너 빈 곳에 흩어 놓기 (스티커가 든 칸은 높이 0) */
+.st-key-hero [data-testid="stElementContainer"]:has(.bm-stk) {{ height: 0; margin: 0; position: static; }}
+.st-key-hero [data-testid="stMarkdown"]:has(.bm-stk), .st-key-hero [data-testid="stMarkdownContainer"]:has(.bm-stk) {{ position: static; }}
+.bm-stk {{ position: absolute; z-index: 0; filter: drop-shadow(0 3px 4px rgba(160,70,20,.25)); pointer-events: none; }}
+.bm-stk-onigiri  {{ width: 58px; left: 52%; top: 16px; transform: rotate(-12deg); }}
+.bm-stk-star     {{ width: 40px; left: 59%; top: 44%; transform: rotate(14deg); }}
+.bm-stk-boba     {{ width: 56px; left: 57%; bottom: 8px; transform: rotate(8deg); }}
+.bm-stk-heart    {{ width: 30px; left: 47%; top: 50%; transform: rotate(-10deg); }}
+.bm-stk-skewer   {{ width: 56px; right: 10px; bottom: 6px; transform: rotate(28deg); }}
+.bm-stk-dumpling {{ width: 54px; right: 14px; top: 12px; transform: rotate(10deg); }}
+.st-key-hero [data-testid="stHorizontalBlock"] {{ position: relative; z-index: 1; }}
+.bm-hero-right {{ position: relative; }}
+.bm-bubble {{
+  position: absolute; left: -6px; top: 4px; z-index: 2;
+  background: #fff; color: {PRIMARY}; font-weight: 800; font-size: .92rem;
+  padding: 8px 14px; border-radius: 18px; box-shadow: 0 4px 12px rgba(160,70,20,.15);
+}}
+.bm-bubble::after {{
+  content: ""; position: absolute; right: 18px; bottom: -9px;
+  border-width: 10px 8px 0 8px; border-style: solid; border-color: #fff transparent transparent transparent;
+}}
+.bm-hero-badge {{
+  display: inline-block; background: #fff; color: {PRIMARY}; border: 1px solid #FFD2B8;
+  border-radius: 999px; padding: 2px 12px; font-size: .74rem; font-weight: 800; letter-spacing: .3px;
+}}
+.bm-hero-title {{ font-size: 2.4rem; font-weight: 900; color: #3B2A20; line-height: 1.15; margin-top: 8px;
+  display: flex; align-items: center; gap: 8px; }}
+.bm-hero-mini {{ display: none; width: 52px; }}
+.bm-hero-sub {{ color: #8A6450; font-size: 1.02rem; margin: 6px 0 14px; }}
+.bm-stats {{ display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }}
+.bm-stat {{
+  background: #fff; color: #7A4A30; border-radius: 12px; padding: 5px 12px; font-size: .82rem;
+  border: 1px solid #FFE1CD;
+}}
+.bm-stat b {{ color: {PRIMARY}; font-size: 1rem; margin-left: 2px; }}
+.bm-hero-img {{ width: 100%; max-width: 380px; display: block; margin: 0 auto;
+  filter: drop-shadow(0 8px 12px rgba(200,110,60,.18)); }}
 .bm-page-title {{ font-size: 1.7rem; font-weight: 800; margin: 0 0 2px; }}
 .bm-page-sub {{ color: #6B7280; margin-bottom: 14px; }}
 .st-key-home_q div[data-baseweb="input"] {{
@@ -39,9 +76,14 @@ CSS = f"""
 .st-key-home_q input {{ height: 3.3rem; font-size: 1.05rem; background: #fff; padding-left: 14px; }}
 @media (max-width: 640px) {{
   .block-container {{ padding-top: 3.6rem; }}
-  .bm-hero {{ padding: 18px 18px; border-radius: 18px; }}
-  .bm-hero h1 {{ font-size: 1.55rem; }}
-  .bm-hero .bm-stat {{ font-size: .8rem; }}
+  .st-key-hero {{ padding: 16px 14px 12px; border-radius: 20px; }}
+  .bm-hero-title {{ font-size: 1.75rem; }}
+  .bm-hero-mini {{ display: inline-block; }}   /* 휴대폰: 큰 마스코트 대신 제목 옆 작은 마스코트 */
+  .bm-hero-img, .bm-bubble {{ display: none; }}
+  .bm-stat {{ font-size: .76rem; padding: 4px 9px; }}
+  .bm-stk-onigiri, .bm-stk-star, .bm-stk-boba, .bm-stk-heart {{ display: none; }}
+  .bm-stk-dumpling {{ width: 40px; right: 10px; top: 10px; }}
+  .bm-stk-skewer {{ width: 38px; right: 8px; bottom: 6px; }}
 }}
 .bm-sample {{
   position: absolute; bottom: 6px; right: 8px; background: rgba(0,0,0,.45); color: #fff;
