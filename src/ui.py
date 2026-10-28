@@ -12,7 +12,7 @@ from src.auth import (current_member, current_user_id, favorite_ids, is_admin, l
                       set_favorite)
 from src.config import CUISINE_COLOR, IMAGES_DIR, MIN_VOTES, MIN_YES_RATIO
 from src.data import encode_menus, get_data, load_reviews, parse_menus, save_review, save_store_update
-from src.i18n import cuisine_label, t
+from src.i18n import area_label, cuisine_label, current_lang, nationality_label, source_label, t
 from src.illustrations import illustration_key, illustration_uri
 
 PRIMARY = "#F26B3A"
@@ -20,6 +20,22 @@ PRIMARY = "#F26B3A"
 CSS = f"""
 <style>
 .block-container {{ padding-top: 2.2rem; max-width: 1180px; }}
+/* ---- 언어 전환: 화면 위쪽 헤더 줄에 떠 있는 작은 알약 모양 버튼 */
+.st-key-langbar {{
+  position: fixed; top: 12px; right: 170px; z-index: 1000001;
+  width: auto !important; gap: 2px !important; padding: 3px;
+  background: #fff; border: 1px solid #FFD2B8; border-radius: 999px;
+  box-shadow: 0 3px 10px rgba(242,107,58,.15);
+}}
+.st-key-langbar [data-testid="stElementContainer"], .st-key-langbar .stButton {{ width: auto !important; }}
+.st-key-langbar button {{
+  min-height: 0 !important; height: 30px; padding: 0 14px !important; border-radius: 999px !important;
+  font-size: .8rem !important; font-weight: 700; border: none !important; box-shadow: none !important;
+}}
+.st-key-langbar button[kind="secondary"] {{ background: transparent !important; color: #8A6450 !important; }}
+.st-key-langbar button[kind="secondary"]:hover {{ background: #FFF1E8 !important; color: {PRIMARY} !important; }}
+.st-key-langbar button p {{ font-size: .8rem !important; }}
+
 /* ---- 홈 배너 (밝은 크림·피치 배경) */
 .st-key-hero {{
   position: relative; overflow: hidden;
@@ -76,6 +92,8 @@ CSS = f"""
 .st-key-home_q input {{ height: 3.3rem; font-size: 1.05rem; background: #fff; padding-left: 14px; }}
 @media (max-width: 640px) {{
   .block-container {{ padding-top: 3.6rem; }}
+  .st-key-langbar {{ top: 10px; right: auto; left: 50%; transform: translateX(-50%); }}
+  .st-key-langbar button {{ height: 28px; padding: 0 10px !important; }}
   .st-key-hero {{ padding: 16px 14px 12px; border-radius: 20px; }}
   .bm-hero-title {{ font-size: 1.75rem; }}
   .bm-hero-mini {{ display: inline-block; }}   /* 휴대폰: 큰 마스코트 대신 제목 옆 작은 마스코트 */
@@ -187,7 +205,7 @@ def _thumb_html(r: pd.Series) -> str:
 
 def _price_html(r: pd.Series) -> str:
     if pd.notna(r["budget_price"]):
-        note = " · 학생 제보" if r["budget_price_basis"] == "학생 제보" else ""
+        note = f" · {t('src.student')}" if r["budget_price_basis"] == "학생 제보" else ""
         return f'<div class="bm-price">{fmt_won(r["budget_price"])}{t("common.from")} <small>{html.escape(str(r["signature_menu"]) if has(r.get("signature_menu")) else "")}{note}</small></div>'
     return (f'<div class="bm-price na">{t("common.no_price")} · '
             f'<a class="bm-naver" href="{naver_url(r)}" target="_blank" rel="noopener">{t("common.see_naver")}</a></div>')
@@ -206,6 +224,13 @@ def _rating_html(r: pd.Series) -> str:
     return f'<div class="bm-meta bm-cta">{t("common.first_review")}</div>'
 
 
+def _category_sub(r: pd.Series) -> str:
+    """세부 업종(공공데이터 원문, 한국어)은 한국어 화면에서만 보여 준다."""
+    if current_lang() == "ko" and has(r.get("category_sub")):
+        return str(r["category_sub"])
+    return ""
+
+
 def _distance_text(r: pd.Series) -> str:
     if r["area"] == "교내":
         return "🏫 " + t("common.on_campus")
@@ -214,12 +239,12 @@ def _distance_text(r: pd.Series) -> str:
 
 def card_html(r: pd.Series) -> str:
     color = CUISINE_COLOR.get(r["cuisine"], "#6B7280")
-    sub = r["name_en"] if has(r.get("name_en")) else (r["category_sub"] if has(r.get("category_sub")) else "")
+    sub = r["name_en"] if has(r.get("name_en")) else _category_sub(r)
     return (
         _thumb_html(r)
         + '<div class="bm-chips">'
         + f'<span class="bm-chip" style="background:{color}1A;color:{color}">{cuisine_label(r["cuisine"])}</span>'
-        + f'<span class="bm-chip">{html.escape(str(r["area"]))}</span></div>'
+        + f'<span class="bm-chip">{html.escape(area_label(r["area"]))}</span></div>'
         + f'<div class="bm-name">{html.escape(str(r["name"]))}</div>'
         + f'<div class="bm-sub">{html.escape(str(sub))}&nbsp;</div>'
         + _price_html(r)
@@ -343,8 +368,8 @@ def show_detail(store_id: str) -> None:
         st.caption(r["name_en"])
     st.markdown(
         f'<span class="bm-chip" style="background:{color}1A;color:{color}">{cuisine_label(r["cuisine"])}</span> '
-        f'<span class="bm-chip">{html.escape(str(r["category_sub"]) if has(r.get("category_sub")) else "")}</span> '
-        f'<span class="bm-chip">{html.escape(str(r["area"]))}</span>'
+        + (f'<span class="bm-chip">{html.escape(_category_sub(r))}</span> ' if _category_sub(r) else "")
+        + f'<span class="bm-chip">{html.escape(area_label(r["area"]))}</span>'
         + (f' <span class="bm-chip" style="background:#2B8A3E;color:#fff">{t("common.good_price")}</span>' if r["good_price"] else ""),
         unsafe_allow_html=True,
     )
@@ -357,7 +382,7 @@ def show_detail(store_id: str) -> None:
                 else t("detail.distance_value", m=int(r["distance_m"]), min=int(r["walk_min"])))
         st.markdown(f"**🚶 {t('detail.distance')}**  \n{dist}")
         hours = r["open_hours"] if has(r.get("open_hours")) else t("common.no_info")
-        src = f" _({r['hours_source']})_" if has(r.get("hours_source")) else ""
+        src = f" _({source_label(r['hours_source'])})_" if has(r.get("hours_source")) else ""
         st.markdown(f"**🕒 {t('detail.hours')}**  \n{hours}{src}")
     with c2:
         st.markdown(f"**⭐ {t('detail.rating')}**  \n{_rating_text(r)}")
@@ -370,9 +395,9 @@ def show_detail(store_id: str) -> None:
     st.markdown(f"**🧾 {t('detail.menu')}**")
     items = parse_menus(r.get("menus"))
     if items:
-        st.dataframe(pd.DataFrame([(m, fmt_won(p)) for m, p in items], columns=["메뉴", "가격"]),
+        st.dataframe(pd.DataFrame([(m, fmt_won(p)) for m, p in items], columns=[t("edit.menu"), t("edit.price")]),
                      hide_index=True, width="stretch")
-        st.caption(t("detail.price_source", src=r["price_source"]))
+        st.caption(t("detail.price_source", src=source_label(r["price_source"])))
     else:
         st.caption(t("common.no_price"))
     if not items or not has(r.get("open_hours")):  # 모르는 정보는 네이버에서 바로 확인
@@ -416,7 +441,7 @@ def _recent_reviews(store_id: str, limit: int = 5) -> None:
     rv = rv.merge(members_table()[["user_id", "nickname", "nationality"]], on="user_id", how="left")
     st.markdown(f"**💬 {t('detail.recent_reviews')}**")
     for _, x in rv.iloc[::-1].head(limit).iterrows():
-        nat = f" · {x['nationality']}" if has(x.get("nationality")) else ""
+        nat = f" · {nationality_label(x['nationality'])}" if has(x.get("nationality")) else ""
         who = x["nickname"] if has(x.get("nickname")) else t("detail.unknown_user")
         st.markdown(f"{'⭐' * int(x['stars'])} **{html.escape(str(who))}**{html.escape(nat)}  \n"
                     f"{html.escape(str(x['comment']))}")
@@ -467,7 +492,7 @@ def _store_update_form(r: pd.Series) -> None:
             column_config={
                 "menu": st.column_config.TextColumn(t("edit.menu"), max_chars=30),
                 "price": st.column_config.NumberColumn(t("edit.price"), min_value=500, max_value=100_000,
-                                                       step=500, format="%d원"),
+                                                       step=500, format="%d" + t("common.won")),
             })
         hours = st.text_input(t("edit.hours"), value=str(r["open_hours"]) if has(r.get("open_hours")) else "",
                               placeholder=t("edit.hours_ph"), max_chars=120)
