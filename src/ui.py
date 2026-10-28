@@ -8,9 +8,10 @@ from urllib.parse import quote
 import pandas as pd
 import streamlit as st
 
-from src.auth import current_member, current_user_id, favorite_ids, login_button, members_table, set_favorite
+from src.auth import (current_member, current_user_id, favorite_ids, is_admin, login_button, members_table,
+                      set_favorite)
 from src.config import CUISINE_COLOR, IMAGES_DIR, MIN_VOTES, MIN_YES_RATIO
-from src.data import get_data, load_reviews, save_review
+from src.data import encode_menus, get_data, load_reviews, parse_menus, save_review, save_store_update
 from src.i18n import cuisine_label, t
 from src.illustrations import illustration_key, illustration_uri
 
@@ -70,7 +71,7 @@ CSS = f"""
 .bm-price small {{ font-size: .78rem; color: #6B7280; font-weight: 500; }}
 .bm-price.na {{ font-size: .88rem; color: #9CA3AF; font-weight: 500; }}
 .bm-meta {{ font-size: .84rem; color: #4B5563; margin-top: 2px; }}
-.bm-empty {{ text-align: center; padding: 40px 10px; color: #6B7280; }}
+.bm-cta {{ color: {PRIMARY}; font-weight: 600; }}.bm-empty {{ text-align: center; padding: 40px 10px; color: #6B7280; }}
 .bm-empty div {{ font-size: 2.6rem; }}
 </style>
 """
@@ -99,14 +100,14 @@ def has(value) -> bool:
 
 
 def map_links(r: pd.Series) -> dict:
-    """무료 지도 URL. 좌표·주소가 실제 데이터에 있을 때만 만든다."""
+    """무료 지도 URL. 좌표·주소가 실제 데이터에 있을 때만 만든다.
+    한국에서는 구글 지도의 길찾기가 제한되므로 네이버 지도·카카오맵만 쓴다."""
     name = str(r["name"])
     links = {}
     if has(r.get("address")):
         links["naver"] = "https://map.naver.com/p/search/" + quote(f"{r['address']} {name}")
     if has(r.get("lat")) and has(r.get("lon")):
         links["kakao"] = f"https://map.kakao.com/link/to/{quote(name)},{r['lat']},{r['lon']}"
-        links["google"] = f"https://www.google.com/maps/search/?api=1&query={r['lat']},{r['lon']}"
     return links
 
 
@@ -147,6 +148,13 @@ def _rating_text(r: pd.Series) -> str:
     return t("common.no_rating")
 
 
+def _rating_html(r: pd.Series) -> str:
+    """카드용: 평가가 없으면 첫 평가를 부탁하는 문구."""
+    if r["rating_count"] > 0:
+        return f'<div class="bm-meta">{_rating_text(r)}</div>'
+    return f'<div class="bm-meta bm-cta">{t("common.first_review")}</div>'
+
+
 def _distance_text(r: pd.Series) -> str:
     if r["area"] == "교내":
         return "🏫 " + t("common.on_campus")
@@ -165,7 +173,7 @@ def card_html(r: pd.Series) -> str:
         + f'<div class="bm-sub">{html.escape(str(sub))}&nbsp;</div>'
         + _price_html(r)
         + f'<div class="bm-meta">{_distance_text(r)}</div>'
-        + f'<div class="bm-meta">{_rating_text(r)}</div>'
+        + _rating_html(r)
     )
 
 
@@ -302,13 +310,16 @@ def show_detail(store_id: str) -> None:
         st.markdown(f"**🕒 {t('detail.hours')}**  \n{hours}{src}")
     with c2:
         st.markdown(f"**⭐ {t('detail.rating')}**  \n{_rating_text(r)}")
-        st.markdown(f"**🙋 {t('detail.solo')}**  \n{_vote_text(r['solo_yes'], r['solo_votes'])}")
-        st.markdown(f"**👥 {t('detail.group')}**  \n{_vote_text(r['group_yes'], r['group_votes'])}")
+        # 혼밥·모임 추천은 응답이 충분히 모였을 때만 보여 준다
+        if r["solo_votes"] >= MIN_VOTES:
+            st.markdown(f"**🙋 {t('detail.solo')}**  \n{_vote_text(r['solo_yes'], r['solo_votes'])}")
+        if r["group_votes"] >= MIN_VOTES:
+            st.markdown(f"**👥 {t('detail.group')}**  \n{_vote_text(r['group_yes'], r['group_votes'])}")
 
     st.markdown(f"**🧾 {t('detail.menu')}**")
-    if has(r.get("menus")):
-        items = [m.rsplit(":", 1) for m in str(r["menus"]).split(";") if ":" in m]
-        st.dataframe(pd.DataFrame([(m, fmt_won(float(p))) for m, p in items], columns=["메뉴", "가격"]),
+    items = parse_menus(r.get("menus"))
+    if items:
+        st.dataframe(pd.DataFrame([(m, fmt_won(p)) for m, p in items], columns=["메뉴", "가격"]),
                      hide_index=True, width="stretch")
         st.caption(t("detail.price_source", src=r["price_source"]))
     else:
@@ -327,12 +338,20 @@ def show_detail(store_id: str) -> None:
 
     _recent_reviews(r["id"])
 
-    with st.expander(f"✍️ {t('detail.review_title')}"):
+    # 평가가 하나도 없으면 평가 창을 펼쳐 두어 첫 평가를 유도한다
+    with st.expander(f"✍️ {t('detail.review_title')}", expanded=r["rating_count"] == 0):
         if current_member():
             _review_form(r["id"])
         else:
             st.info(t("auth.need_login_review"))
             login_button("detail_login")
+
+    with st.expander(f"📝 {t('edit.title_admin') if is_admin() else t('edit.title_member')}"):
+        if current_member():
+            _store_update_form(r)
+        else:
+            st.info(t("edit.need_login"))
+            login_button("edit_login")
 
 
 def _recent_reviews(store_id: str, limit: int = 5) -> None:
@@ -377,6 +396,43 @@ def _review_form(store_id: str) -> None:
                 price_value = int(digits)
             save_review(uid, store_id, stars + 1, solo, group, price_value, comment)
             st.session_state["toast"] = t("review.saved")
+            st.rerun()
+
+
+def _store_update_form(r: pd.Series) -> None:
+    """메뉴·가격·영업시간 입력.
+    - 관리자(팀): '현장 조사'로 저장하면 바로 반영
+    - 일반 회원: '회원 제보'로 저장 → 관리자 페이지에서 승인하면 반영
+    """
+    admin = is_admin()
+    st.caption(t("edit.help_admin") if admin else t("edit.help_member"))
+    current = parse_menus(r.get("menus"))
+    start = pd.DataFrame(current or [("", None)], columns=["menu", "price"])
+    with st.form(f"edit_{r['id']}", clear_on_submit=False):
+        table = st.data_editor(
+            start, num_rows="dynamic", hide_index=True, width="stretch", key=f"edit_tbl_{r['id']}",
+            column_config={
+                "menu": st.column_config.TextColumn(t("edit.menu"), max_chars=30),
+                "price": st.column_config.NumberColumn(t("edit.price"), min_value=500, max_value=100_000,
+                                                       step=500, format="%d원"),
+            })
+        hours = st.text_input(t("edit.hours"), value=str(r["open_hours"]) if has(r.get("open_hours")) else "",
+                              placeholder=t("edit.hours_ph"), max_chars=120)
+        confirm = st.checkbox(t("edit.confirm_admin") if admin else t("edit.confirm_member"))
+        if st.form_submit_button(t("edit.submit"), type="primary"):
+            rows = table.dropna(subset=["menu", "price"])
+            rows = rows[rows["menu"].astype(str).str.strip() != ""]
+            menus = encode_menus(zip(rows["menu"], rows["price"]))
+            if not menus and not hours.strip():
+                st.error(t("edit.err_empty"))
+                return
+            if not confirm:
+                st.error(t("edit.err_confirm"))
+                return
+            save_store_update(current_user_id(), r["id"], menus, hours,
+                              source="현장 조사" if admin else "회원 제보",
+                              status="approved" if admin else "pending")
+            st.session_state["toast"] = t("edit.saved_admin") if admin else t("edit.saved_member")
             st.rerun()
 
 
