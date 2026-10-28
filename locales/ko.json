@@ -103,6 +103,8 @@
   "common.sample_image": "예시 이미지",
   "common.map_click": "👆 눌러서 자세히 보기",
   "common.first_review": "⭐ 첫 평가를 남겨 주세요!",
+  "common.see_naver": "네이버에서 보기 ↗",
+  "detail.naver_info": "📋 네이버에서 메뉴·영업시간 보기",
 
   "edit.title_admin": "가격·영업시간 입력 (현장 조사)",
   "edit.title_member": "가격·영업시간 제보하기",
