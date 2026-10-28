@@ -117,9 +117,73 @@ def _verified(yes: pd.Series, votes: pd.Series) -> pd.Series:
     return (votes >= MIN_VOTES) & (yes / votes.where(votes > 0) >= MIN_YES_RATIO)
 
 
+# ---------------------------------------------------------------- 가게 정보 수정 (현장 조사·회원 제보)
+def encode_menus(items) -> str:
+    """[(메뉴, 가격), ...] → '메뉴:가격;메뉴:가격' (구분 기호가 메뉴 이름에 들어가지 않게 정리)."""
+    out = []
+    for name, price in items:
+        name = str(name).replace(":", " ").replace(";", " ").strip()
+        if name and pd.notna(price):
+            out.append(f"{name}:{int(price)}")
+    return ";".join(out)
+
+
+def parse_menus(text) -> list:
+    """'메뉴:가격;...' → [(메뉴, 가격)] (잘못된 가격은 버림)."""
+    items = []
+    for part in str(text or "").split(";"):
+        if ":" not in part:
+            continue
+        name, price = part.rsplit(":", 1)
+        price = pd.to_numeric(price, errors="coerce")
+        if name.strip() and pd.notna(price) and 0 < price <= MAX_VALID_PRICE:
+            items.append((name.strip(), float(price)))
+    return items
+
+
+def load_store_updates() -> pd.DataFrame:
+    """제보·조사 기록. update_id 마다 마지막 상태만 남긴다."""
+    return read_table("store_updates").drop_duplicates("update_id", keep="last")
+
+
+def save_store_update(user_id: str, store_id: str, menus: str, open_hours: str, source: str, status: str,
+                      update_id: str | None = None) -> None:
+    append_row("store_updates", {
+        "update_id": update_id or uuid.uuid4().hex[:12], "user_id": user_id, "store_id": store_id,
+        "menus": menus, "open_hours": open_hours.strip()[:120], "source": source, "status": status,
+        "created_at": now(),
+    })
+
+
+def _apply_updates(df: pd.DataFrame) -> pd.DataFrame:
+    """승인된 수정 내용을 가게 정보에 덮어쓴다 (가게마다 가장 최근 것).
+    메뉴·영업시간 중 비어 있는 항목은 원래 정보를 그대로 둔다."""
+    up = load_store_updates()
+    up = up[up["status"] == "approved"]
+    if up.empty:
+        return df
+    df = df.set_index("id")
+    for col in ("menus", "price_source", "open_hours", "hours_source", "signature_menu"):
+        df[col] = df[col].astype("object")
+    for _, u in up.iterrows():
+        sid = u["store_id"]
+        if sid not in df.index:
+            continue
+        label = f"{u['source']}({str(u['created_at'])[:10]})"
+        items = parse_menus(u["menus"])
+        if items:
+            prices = [p for _, p in items]
+            df.loc[sid, ["menus", "price_source", "signature_menu"]] = [encode_menus(items), label, items[0][0]]
+            df.loc[sid, ["price_min", "price_max", "signature_price"]] = [min(prices), max(prices), items[0][1]]
+        if str(u["open_hours"]).strip():
+            df.loc[sid, ["open_hours", "hours_source"]] = [u["open_hours"], label]
+    return df.reset_index()
+
+
 def get_data() -> pd.DataFrame:
-    """가게 목록 + 학생 평가 요약을 합친 표. 화면은 모두 이 표를 쓴다."""
-    df = load_restaurants().merge(aggregate_reviews(load_reviews()), on="id", how="left")
+    """가게 목록 + 현장 조사/제보 + 학생 평가 요약을 합친 표. 화면은 모두 이 표를 쓴다."""
+    df = _apply_updates(load_restaurants())
+    df = df.merge(aggregate_reviews(load_reviews()), on="id", how="left")
     for col in ("rating_count", "solo_yes", "solo_votes", "group_yes", "group_votes", "student_price_n"):
         df[col] = df[col].fillna(0).astype(int)
     df["solo_verified"] = _verified(df["solo_yes"], df["solo_votes"])
