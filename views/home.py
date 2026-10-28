@@ -5,24 +5,36 @@ from src.config import CUISINE_ORDER, DEFAULT_BUDGET_BANDS
 from src.data import get_data
 from src.filters import apply_filters, search, sort_df
 from src.i18n import cuisine_label, t
+from src.illustrations import mascot_uri, sticker_uri
 from src.ui import render_grid, render_map
 
 df = get_data()
 
-st.markdown(f"""
-<div class="bm-hero">
-  <h1>🍚 {t('app.name')}</h1>
-  <p>{t('app.tagline')}</p>
-  <div class="bm-stats">
-    <span class="bm-stat">{t('home.stat_total')} <b>{len(df):,}</b></span>
-    <span class="bm-stat">{t('home.stat_priced')} <b>{int(df['budget_price'].notna().sum())}</b></span>
-    <span class="bm-stat">{t('home.stat_rated')} <b>{int(df['rating_count'].sum())}</b></span>
-  </div>
+# ---- 배너: 왼쪽(제목·검색·통계) + 오른쪽(마스코트). 검색창을 배너 안에 넣어 빈 공간을 줄였다.
+with st.container(key="hero"):
+    # 배너 빈 곳에 흩어 놓는 스티커 (위치는 CSS .bm-stk-* 에서 정함)
+    st.markdown("".join(f'<img class="bm-stk bm-stk-{n}" src="{sticker_uri(n)}" alt="">'
+                        for n in ("onigiri", "boba", "skewer", "dumpling", "heart", "star")),
+                unsafe_allow_html=True)
+    left, right = st.columns([1.5, 1], vertical_alignment="center")
+    with left:
+        st.markdown(f"""
+<div class="bm-hero-badge">SeoulTech BapMate</div>
+<div class="bm-hero-title"><img class="bm-hero-mini" src="{mascot_uri()}" alt="">{t('app.name')}</div>
+<div class="bm-hero-sub">{t('app.tagline')}</div>
+""", unsafe_allow_html=True)
+        query = st.text_input("search", placeholder=t("home.search_placeholder"), key="home_q",
+                              label_visibility="collapsed")
+        st.markdown(f"""
+<div class="bm-stats">
+  <span class="bm-stat">🍽️ {t('home.stat_total')} <b>{len(df):,}</b></span>
+  <span class="bm-stat">💰 {t('home.stat_priced')} <b>{int(df['budget_price'].notna().sum())}</b></span>
+  <span class="bm-stat">⭐ {t('home.stat_rated')} <b>{int(df['rating_count'].sum())}</b></span>
 </div>
 """, unsafe_allow_html=True)
-
-query = st.text_input("search", placeholder=t("home.search_placeholder"), key="home_q",
-                      label_visibility="collapsed")
+    with right:
+        st.markdown(f'<div class="bm-hero-right"><div class="bm-bubble">{t("home.bubble")}</div>'
+                    f'<img class="bm-hero-img" src="{mascot_uri()}" alt=""></div>', unsafe_allow_html=True)
 cuisines = st.pills(t("home.filter_cuisine"), CUISINE_ORDER, format_func=cuisine_label,
                     selection_mode="multi", key="home_cuisine")
 
