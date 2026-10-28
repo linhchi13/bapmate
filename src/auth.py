@@ -10,10 +10,9 @@ import hashlib
 import pandas as pd
 import streamlit as st
 
-from src.i18n import t
+from src.i18n import NATIONALITY_CODES, nationality_label, t
 from src.storage import append_row, delete_user_data, now, read_table, secret_section
 
-NATIONALITIES = ["", "베트남", "중국", "몽골", "우즈베키스탄", "인도네시아", "네팔", "일본", "미국", "프랑스", "기타"]
 
 
 def google_enabled() -> bool:
@@ -118,7 +117,7 @@ def signup_form() -> None:
                 f'<div class="bm-page-sub">{t("auth.signup_sub")}</div>', unsafe_allow_html=True)
     with st.form("signup"):
         nickname = st.text_input(t("auth.nickname"), max_chars=20, placeholder=t("auth.nickname_ph"))
-        nationality = st.selectbox(t("auth.nationality"), NATIONALITIES, format_func=lambda x: x or t("auth.no_answer"))
+        nationality = st.selectbox(t("auth.nationality"), NATIONALITY_CODES, format_func=nationality_label)
         agree = st.checkbox(t("auth.agree"))
         st.caption(t("auth.privacy"))
         if st.form_submit_button(t("auth.signup_btn"), type="primary", width="stretch"):
