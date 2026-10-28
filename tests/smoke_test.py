@@ -115,6 +115,20 @@ try:
     check("review aggregate", row["rating_count"] == 3 and abs(row["rating_avg"] - 13 / 3) < 1e-9)
     check("solo verified after 3 yes votes", bool(row["solo_verified"]) and not bool(row["group_verified"]))
 
+    # 6-1) 가격·영업시간: 회원 제보는 승인 전에는 반영되지 않고, 승인 후 반영
+    from src.data import encode_menus, load_store_updates, save_store_update  # noqa: E402
+    sid2 = df[df["budget_price"].isna() & (df["id"] != sid)]["id"].iloc[0]  # 앞에서 평가(학생 제보 가격)한 가게는 제외
+    save_store_update("other0", sid2, encode_menus([("칼국수", 9000), ("만두", 6000)]), "매일 11:00-21:00",
+                      "회원 제보", "pending", update_id="upd1")
+    row = get_data().set_index("id").loc[sid2]
+    check("pending report not applied", pd.isna(row["budget_price"]))
+    save_store_update("other0", sid2, encode_menus([("칼국수", 9000), ("만두", 6000)]), "매일 11:00-21:00",
+                      "회원 제보", "approved", update_id="upd1")
+    row = get_data().set_index("id").loc[sid2]
+    check("approved report applied", row["budget_price"] == 6000 and row["open_hours"] == "매일 11:00-21:00"
+          and str(row["price_source"]).startswith("회원 제보"), (row["budget_price"], row["open_hours"]))
+    check("one update record per id", len(load_store_updates()) == 1)
+
     # 7) 관리자 페이지: 현황 표시 + 후기 삭제
     at.switch_page("views/admin.py").run()
     check("admin page opens", not at.exception and any(m.label == "전체 회원" and m.value == "1" for m in at.metric),
