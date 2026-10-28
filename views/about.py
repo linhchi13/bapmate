@@ -4,7 +4,7 @@ import json
 import pandas as pd
 import streamlit as st
 
-from src.config import QUALITY_REPORT, SOURCES_CSV
+from src.config import QR_IMAGE, QUALITY_REPORT, SOURCES_CSV
 from src.i18n import t
 from src.ui import page_header
 
@@ -53,6 +53,11 @@ st.write(t("about.images"))
 
 st.markdown(f"#### {t('about.privacy_title')}")
 st.markdown(t("about.privacy"))
+
+if QR_IMAGE.exists():
+    st.markdown(f"#### {t('about.qr_title')}")
+    st.caption(t("about.qr"))
+    st.image(str(QR_IMAGE), width=220)
 
 st.markdown(f"#### {t('about.team_title')}")
 st.dataframe(pd.DataFrame(TEAM, columns=[t("about.name"), t("about.student_id")]), hide_index=True)
