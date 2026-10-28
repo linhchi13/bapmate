@@ -1,1 +1,17 @@
-﻿store_id,store_name,name_en,open_hours,image_path,checked_date,checked_by,note
+﻿store_id,store_name,name_en,open_hours,image_path,checked_date,checked_by,source,note
+MA010120220808323726,사나이뚝배기과기대점,,매일 10:00-22:00,,2026-10-28,웹 검색,테이블링,https://www.tabling.co.kr/place/677cd4d566de5f06988e1fed
+MA0106202503A0009155,한국맥도날드서울과학기술대점,McDonald's,매일 07:00-23:00,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=AdIokXD8pw1B
+MA0101202406A0451255,응급실국물떡볶이서울 공릉점,,매일 11:00-23:30 (라스트오더 23:15),,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=Tz4s3gvcZ9Sy
+MA010120220805195328,샹츠마라,,매일 11:00-22:00 (브레이크 15:30-16:30 / 라스트오더 21:00),,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=svBgZ4fBG73C
+MA010120220803461033,핏짜굽는언니,,월-토 11:00-22:00 / 일 12:00-22:00 (라스트오더 21:00),,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=h8RDQg08xZ4E
+MA010120220804358983,소문난순대국,,매일 06:00-21:00,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=kn5aArwJd5bS
+MA0101202310A0049285,삼거리식당,,매일 06:00-21:00,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=9gYq5IOzWxov
+MA010120220809883909,돈까스가게,,월-토 11:00-20:00 / 일 휴무,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=DwoENhnPpBgU
+MA010120220803950082,온달네,,월-토 11:00-21:00 / 일 휴무,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=zRLlCrt71pzC (웹 주소 공릉로 239)
+MA010120220810410813,쪼매매운떡볶이,,일-금 11:00-22:00 / 토 휴무,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=rLjtrMFJxQVm
+MA0101202302A0083613,불타는생고기,,매일 16:00-02:00,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=y6zeO8fRIxtf
+MA010120220804368796,김밥천국,,매일 06:00-22:00,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=42nRRyxK7TFC
+MA0101202406A0407500,오공김밥 공릉점,,월-금 09:00-21:00 / 토-일 09:00-20:00,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=9bUyTIKXugOH
+MA0101202406A0263478,청년고기장수 공릉점,,월-금 16:00-24:00 / 토-일 11:00-22:30,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=gtSHsY74VdRk
+MA0101202503A0036959,버거고,,화-토 11:00-21:00 / 일 13:00-20:00 / 월 휴무,,2026-10-28,웹 검색,다이닝코드,https://www.diningcode.com/profile.php?rid=KVag42jd3eBY
+MA010120220804369267,한촌설렁탕공릉역점,,매일 10:00-22:00,,2026-10-28,웹 검색,테이블링,https://www.tabling.co.kr/place/677cc6fd66de5f069873da1e
