@@ -145,6 +145,7 @@
 
   "home.search_placeholder": "🔍 가게·메뉴 검색 (예: 국수, 짜장, 쌀국수)",
   "home.more_filters": "상세 필터",
+  "home.bubble": "오늘 뭐 먹지? 🤔",
   "home.filter_budget": "💰 1인 예산",
   "home.budget_upto": "{won}원 이하",
   "home.budget_custom": "직접 입력",
