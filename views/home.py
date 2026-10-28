@@ -4,7 +4,7 @@ import streamlit as st
 from src.config import CUISINE_ORDER, DEFAULT_BUDGET_BANDS
 from src.data import get_data
 from src.filters import apply_filters, search, sort_df
-from src.i18n import cuisine_label, t
+from src.i18n import area_label, cuisine_label, lang_key, t
 from src.illustrations import mascot_uri, sticker_uri
 from src.ui import render_grid, render_map
 
@@ -36,14 +36,15 @@ with st.container(key="hero"):
         st.markdown(f'<div class="bm-hero-right"><div class="bm-bubble">{t("home.bubble")}</div>'
                     f'<img class="bm-hero-img" src="{mascot_uri()}" alt=""></div>', unsafe_allow_html=True)
 cuisines = st.pills(t("home.filter_cuisine"), CUISINE_ORDER, format_func=cuisine_label,
-                    selection_mode="multi", key="home_cuisine")
+                    selection_mode="multi", key=lang_key("home_cuisine"))
 
 # 예산: 선택하면 가격이 확인된 가게 중에서만 찾는다
 low, high = DEFAULT_BUDGET_BANDS
 budget_opts = {"low": t("home.budget_upto", won=f"{low:,}"), "high": t("home.budget_upto", won=f"{high:,}"),
                "custom": t("home.budget_custom")}
 b1, b2 = st.columns([3, 1])
-budget_choice = b1.pills(t("home.filter_budget"), list(budget_opts), format_func=budget_opts.get, key="home_budget")
+budget_choice = b1.pills(t("home.filter_budget"), list(budget_opts), format_func=budget_opts.get,
+                         key=lang_key("home_budget"))
 budget = {"low": low, "high": high}.get(budget_choice)
 if budget_choice == "custom":
     budget = b2.number_input(t("home.budget_input"), 1000, 100_000, 10_000, 1000, format="%d")
@@ -52,15 +53,18 @@ with st.expander(f"⚙️ {t('home.more_filters')}"):
     c1, c2, c3 = st.columns([1.2, 1.2, 1])
     area_order = {"교내": 0, "학교 앞": 1}
     areas = [""] + sorted(df["area"].unique(), key=lambda a: (area_order.get(a, 2), a))
-    area = c1.selectbox(t("home.filter_area"), areas, format_func=lambda a: a or t("home.filter_area_all"))
+    area = c1.selectbox(t("home.filter_area"), areas,
+                        format_func=lambda a: area_label(a) if a else t("home.filter_area_all"),
+                        key=lang_key("home_area"))
     max_walk = c2.slider(t("home.filter_walk"), 3, int(df["walk_min"].max()), int(df["walk_min"].max()))
     sort_opts = ["distance", "price", "rating", "name"]
     sort_by = c3.selectbox(t("home.sort"), sort_opts, format_func=lambda k: t(f"home.sort.{k}"),
-                           index=1 if budget else 0)
+                           index=1 if budget else 0, key=lang_key(f"home_sort_{bool(budget)}"))
     include_cafe = st.toggle(t("home.include_cafe"), value=False)
 
 view = st.segmented_control("view", ["list", "map"], default="list", label_visibility="collapsed",
-                            format_func=lambda v: "📋 " + t("home.view_list") if v == "list" else "🗺️ " + t("home.view_map"))
+                            format_func=lambda v: "📋 " + t("home.view_list") if v == "list" else "🗺️ " + t("home.view_map"),
+                            key=lang_key("home_view"))
 
 result = search(df, query)
 result = apply_filters(result, cuisines=cuisines, area=area or None, max_walk=max_walk,
