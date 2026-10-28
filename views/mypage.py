@@ -4,7 +4,7 @@ import streamlit as st
 
 from src.auth import current_member, current_user_id, login_button, logout, withdraw
 from src.data import get_data, load_reviews
-from src.i18n import t
+from src.i18n import nationality_label, t
 from src.ui import empty_state, favorites, page_header, render_grid
 
 page_header(t("my.title"), t("my.subtitle"))
@@ -51,7 +51,7 @@ with tab_rev:
         st.dataframe(table, hide_index=True, width="stretch")
 
 with tab_acc:
-    st.caption(t("my.joined", date=member["joined_at"][:10], nat=member["nationality"] or t("auth.no_answer")))
+    st.caption(t("my.joined", date=member["joined_at"][:10], nat=nationality_label(member["nationality"])))
     b1, b2 = st.columns(2)
     if b1.button(t("auth.logout"), width="stretch"):
         logout()
