@@ -6,7 +6,7 @@ import streamlit as st
 from src.config import CUISINE_COLOR, CUISINE_ORDER, DEFAULT_BUDGET_BANDS, SEARCH_RADIUS_M
 from src.data import get_data, load_reviews
 from src.filters import price_band
-from src.i18n import cuisine_label, t
+from src.i18n import area_label, cuisine_label, t
 from src.ui import page_header, render_map
 
 MIN_GROUP = 3  # 평균을 낼 때 그룹당 최소 데이터 수
@@ -59,7 +59,8 @@ with c1:
 # ② 구역별 가게 수
 with c2:
     st.markdown(f"#### {t('stats.by_area')}")
-    area = data.groupby("area").size().reset_index(name="count").sort_values("count", ascending=False)
+    area = data.assign(area=data["area"].map(area_label)).groupby("area").size().reset_index(name="count")
+    area = area.sort_values("count", ascending=False)
     fig = px.bar(area, x="area", y="count", text="count", color_discrete_sequence=["#F26B3A"],
                  labels={"count": t("stats.axis.count"), "area": t("stats.axis.area")})
     st.plotly_chart(style(fig), width="stretch")
@@ -97,7 +98,7 @@ with c4:
                      color_discrete_map=color_map, hover_data={"count": True},
                      labels={"mean": t("stats.axis.price"), "cuisine_label": t("stats.axis.cuisine"),
                              "count": t("stats.axis.count")})
-        fig.update_traces(texttemplate="%{text:,.0f}원")
+        fig.update_traces(texttemplate="%{text:,.0f}" + t("common.won"))
         st.plotly_chart(style(fig), width="stretch")
 
 c5, c6 = st.columns(2)
@@ -126,5 +127,6 @@ st.markdown(f"#### {t('stats.map')}")
 render_map(data, height=460, key="stats_map")
 
 with st.expander(t("stats.table")):
-    cols = ["name", "cuisine_label", "category_sub", "area", "distance_m", "budget_price", "rating_avg", "rating_count"]
-    st.dataframe(data[cols].sort_values("distance_m"), hide_index=True, width="stretch")
+    cols = ["name", "cuisine_label", "area", "distance_m", "budget_price", "rating_avg", "rating_count"]
+    st.dataframe(data.assign(area=data["area"].map(area_label))[cols].sort_values("distance_m"),
+                 hide_index=True, width="stretch")
