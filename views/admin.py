@@ -7,7 +7,8 @@ import plotly.express as px
 import streamlit as st
 
 from src.auth import is_admin
-from src.data import load_restaurants
+from src.config import QR_IMAGE
+from src.data import load_restaurants, load_store_updates, parse_menus, save_store_update
 from src.i18n import t
 from src.storage import delete_rows, get_storage, read_table
 from src.ui import page_header
@@ -34,6 +35,38 @@ k1.metric(t("admin.members"), len(members))
 k2.metric(t("admin.today"), int(members["joined_at"].str.startswith(today).sum()))
 k3.metric(t("admin.reviews"), len(reviews))
 k4.metric(t("admin.favorites"), len(fav))
+
+# ---- 회원 제보 승인 (가격·영업시간)
+updates = load_store_updates()
+pending = updates[updates["status"] == "pending"]
+st.markdown(f"#### {t('admin.pending_title', n=len(pending))}")
+if pending.empty:
+    st.caption(t("admin.pending_none"))
+nick_all = read_table("members").drop_duplicates("user_id", keep="last").set_index("user_id")["nickname"]
+for _, u in pending.iterrows():
+    with st.container(border=True):
+        st.markdown(f"**{names.get(u['store_id'], u['store_id'])}** · {nick_all.get(u['user_id'], '-')} · "
+                    f"{str(u['created_at'])[:16]}")
+        items = parse_menus(u["menus"])
+        if items:
+            st.write(" · ".join(f"{m} {int(p):,}원" for m, p in items))
+        if str(u["open_hours"]).strip():
+            st.write(f"🕒 {u['open_hours']}")
+        a, b, _ = st.columns([1, 1, 3])
+        for col, status, label in ((a, "approved", t("admin.approve")), (b, "rejected", t("admin.reject"))):
+            if col.button(label, key=f"{status}_{u['update_id']}", type="primary" if status == "approved" else "secondary"):
+                save_store_update(u["user_id"], u["store_id"], u["menus"], u["open_hours"], u["source"],
+                                  status, update_id=u["update_id"])
+                st.session_state["toast"] = label
+                st.rerun()
+done = updates[updates["status"] == "approved"]
+st.caption(t("admin.updates_done", n=done["store_id"].nunique()))
+
+# ---- 홍보용 QR 코드
+with st.expander(f"📱 {t('admin.qr')}"):
+    if QR_IMAGE.exists():
+        st.image(str(QR_IMAGE), width=260)
+        st.download_button(t("admin.qr_download"), QR_IMAGE.read_bytes(), "bapmate_qr.png", "image/png")
 
 if members.empty:
     st.info(t("admin.no_members"))
