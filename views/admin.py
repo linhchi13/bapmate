@@ -9,9 +9,9 @@ import streamlit as st
 from src.auth import is_admin
 from src.config import QR_IMAGE
 from src.data import load_restaurants, load_store_updates, parse_menus, save_store_update
-from src.i18n import t
+from src.i18n import nationality_label, t
 from src.storage import delete_rows, get_storage, read_table
-from src.ui import page_header
+from src.ui import fmt_won, page_header
 
 if not is_admin():  # 주소를 직접 입력해 들어와도 막는다
     st.error(t("admin.denied"))
@@ -49,7 +49,7 @@ for _, u in pending.iterrows():
                     f"{str(u['created_at'])[:16]}")
         items = parse_menus(u["menus"])
         if items:
-            st.write(" · ".join(f"{m} {int(p):,}원" for m, p in items))
+            st.write(" · ".join(f"{m} {fmt_won(p)}" for m, p in items))
         if str(u["open_hours"]).strip():
             st.write(f"🕒 {u['open_hours']}")
         a, b, _ = st.columns([1, 1, 3])
@@ -84,7 +84,7 @@ with c1:
     st.plotly_chart(fig, width="stretch")
 with c2:
     st.markdown(f"#### {t('admin.nationality')}")
-    nat = members["nationality"].replace("", t("auth.no_answer")).value_counts().reset_index()
+    nat = members["nationality"].map(nationality_label).value_counts().reset_index()
     nat.columns = ["nationality", "n"]
     fig = px.pie(nat, names="nationality", values="n", hole=.45)
     fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10))
@@ -96,7 +96,7 @@ per_user_reviews = reviews.groupby("user_id").size()
 per_user_fav = fav.groupby("user_id").size()
 table = pd.DataFrame({
     t("auth.nickname"): members["nickname"],
-    t("auth.nationality"): members["nationality"],
+    t("auth.nationality"): members["nationality"].map(nationality_label),
     t("admin.joined"): members["joined_at"],
     t("admin.reviews"): members["user_id"].map(per_user_reviews).fillna(0).astype(int),
     t("admin.favorites"): members["user_id"].map(per_user_fav).fillna(0).astype(int),
