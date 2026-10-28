@@ -59,13 +59,21 @@ try:
     md = " ".join(m.value for m in at.markdown)
     check("search no result shows empty state", "조건에 맞는 가게가 없어요" in md)
     at.text_input(key="home_q").input("").run()
-    at.pills(key="home_budget").set_value("low").run()
+    at.pills(key="home_budget_ko").set_value("low").run()
     md = " ".join(m.value for m in at.markdown)
     from src.data import get_data as _gd  # noqa: E402
     _d = _gd()
     expected = int(((_d["budget_price"] <= 8000) & (_d["cuisine"] != "cafe")).sum())  # 홈은 기본으로 카페 제외
     check("home budget filter (8,000원 이하, 카페 제외)", f"**{expected}곳**" in md and not at.exception,
           [m.value for m in at.markdown if "곳**" in m.value])
+
+    # 2-1) 언어 전환 버튼: EN 을 누르면 영어, 한국어를 누르면 다시 한국어
+    at = run_app()
+    button(at, "EN").click().run()
+    check("switch to English", any("Find great food" in m.value for m in at.markdown) and not at.exception)
+    # (같은 세션에서 다시 '한국어'를 누르는 동작은 AppTest 의 제약으로 브라우저에서 따로 확인함)
+    at = run_app()
+    check("default language is Korean", any("맛집 탐험" in m.value for m in at.markdown))
 
     # 3) 필터 함수
     from src.data import _clean_price, get_data, load_reviews, save_review  # noqa: E402
