@@ -71,7 +71,9 @@ CSS = f"""
 .bm-price small {{ font-size: .78rem; color: #6B7280; font-weight: 500; }}
 .bm-price.na {{ font-size: .88rem; color: #9CA3AF; font-weight: 500; }}
 .bm-meta {{ font-size: .84rem; color: #4B5563; margin-top: 2px; }}
-.bm-cta {{ color: {PRIMARY}; font-weight: 600; }}.bm-empty {{ text-align: center; padding: 40px 10px; color: #6B7280; }}
+.bm-cta {{ color: {PRIMARY}; font-weight: 600; }}
+.bm-naver {{ color: #03C75A !important; font-weight: 700; text-decoration: none; }}
+.bm-naver:hover {{ text-decoration: underline; }}.bm-empty {{ text-align: center; padding: 40px 10px; color: #6B7280; }}
 .bm-empty div {{ font-size: 2.6rem; }}
 </style>
 """
@@ -99,13 +101,19 @@ def has(value) -> bool:
     return value is not None and not (isinstance(value, float) and pd.isna(value)) and value is not pd.NA and str(value).strip() != ""
 
 
+def naver_url(r: pd.Series) -> str:
+    """네이버 지도 검색 링크. '구 이름 + 가게 이름'으로 찾으면 정확도가 가장 높다."""
+    area = r["district"] if has(r.get("district")) else "노원구"
+    return "https://map.naver.com/p/search/" + quote(f"{area} {r['name']}")
+
+
 def map_links(r: pd.Series) -> dict:
     """무료 지도 URL. 좌표·주소가 실제 데이터에 있을 때만 만든다.
     한국에서는 구글 지도의 길찾기가 제한되므로 네이버 지도·카카오맵만 쓴다."""
     name = str(r["name"])
     links = {}
     if has(r.get("address")):
-        links["naver"] = "https://map.naver.com/p/search/" + quote(f"{r['address']} {name}")
+        links["naver"] = naver_url(r)
     if has(r.get("lat")) and has(r.get("lon")):
         links["kakao"] = f"https://map.kakao.com/link/to/{quote(name)},{r['lat']},{r['lon']}"
     return links
@@ -139,7 +147,8 @@ def _price_html(r: pd.Series) -> str:
     if pd.notna(r["budget_price"]):
         note = " · 학생 제보" if r["budget_price_basis"] == "학생 제보" else ""
         return f'<div class="bm-price">{fmt_won(r["budget_price"])}{t("common.from")} <small>{html.escape(str(r["signature_menu"]) if has(r.get("signature_menu")) else "")}{note}</small></div>'
-    return f'<div class="bm-price na">{t("common.no_price")}</div>'
+    return (f'<div class="bm-price na">{t("common.no_price")} · '
+            f'<a class="bm-naver" href="{naver_url(r)}" target="_blank" rel="noopener">{t("common.see_naver")}</a></div>')
 
 
 def _rating_text(r: pd.Series) -> str:
@@ -324,6 +333,8 @@ def show_detail(store_id: str) -> None:
         st.caption(t("detail.price_source", src=r["price_source"]))
     else:
         st.caption(t("common.no_price"))
+    if not items or not has(r.get("open_hours")):  # 모르는 정보는 네이버에서 바로 확인
+        st.link_button(t("detail.naver_info"), naver_url(r), type="primary", width="stretch")
     if r["student_price_n"] > 0:
         st.caption(t("detail.student_price", price=f"{int(r['student_price']):,}", n=r["student_price_n"]))
 
