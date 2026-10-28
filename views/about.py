@@ -34,16 +34,16 @@ st.markdown(f"#### {t('about.quality_title')}")
 if QUALITY_REPORT.exists():
     q = json.loads(QUALITY_REPORT.read_text(encoding="utf-8"))
     steps = pd.DataFrame([
-        ("서울 전체 상가 수", q.get("raw_rows_seoul")),
-        ("음식점(술집 제외)", q.get("food_rows_seoul")),
-        ("학교 반경 안", q.get("within_radius")),
-        ("중복 제거 수", q.get("duplicates_removed")),
-        ("최종 가게 수", q.get("output_rows")),
-        ("착한가격업소 연결", (q.get("good_price") or {}).get("matched") if isinstance(q.get("good_price"), dict) else None),
-        ("OSM 정보 연결", (q.get("osm") or {}).get("matched") if isinstance(q.get("osm"), dict) else None),
-    ], columns=["단계", "건수"])
+        (t("about.step.raw"), q.get("raw_rows_seoul")),
+        (t("about.step.food"), q.get("food_rows_seoul")),
+        (t("about.step.radius"), q.get("within_radius")),
+        (t("about.step.dup"), q.get("duplicates_removed")),
+        (t("about.step.final"), q.get("output_rows")),
+        (t("about.step.good_price"), (q.get("good_price") or {}).get("matched") if isinstance(q.get("good_price"), dict) else None),
+        (t("about.step.osm"), (q.get("osm") or {}).get("matched") if isinstance(q.get("osm"), dict) else None),
+    ], columns=[t("about.step"), t("about.count")])
     st.dataframe(steps, hide_index=True, width="stretch")
-    st.caption(f"처리 시각: {q.get('built_at', '')}")
+    st.caption(t("about.built_at", time=q.get("built_at", "")))
 
 st.markdown(f"#### {t('about.limits_title')}")
 st.markdown(t("about.limits"))
