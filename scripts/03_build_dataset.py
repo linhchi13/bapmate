@@ -209,7 +209,15 @@ def attach_osm(stores: pd.DataFrame) -> pd.DataFrame:
     return stores
 
 
-# ---------------------------------------------------------------- 7. 팀 현장 조사
+# ---------------------------------------------------------------- 7. 팀 현장 조사 / 웹 조사
+def _manual_label(r: pd.Series) -> str:
+    """'현장 조사(날짜)' 또는 '웹 조사: 테이블링(날짜)' 처럼 출처를 밝힌다. source 열이 없으면 현장 조사."""
+    src = r.get("source")
+    src = "현장 조사" if pd.isna(src) or not str(src).strip() else f"웹 조사: {str(src).strip()}"
+    date = r.get("checked_date")
+    return f"{src}({date})" if pd.notna(date) and str(date).strip() else src
+
+
 def attach_manual(stores: pd.DataFrame, menus: list) -> pd.DataFrame:
     """data/manual/ 의 직접 조사 자료가 있으면 공공데이터보다 우선 적용한다."""
     stores["image_path"] = pd.NA
@@ -227,7 +235,7 @@ def attach_manual(stores: pd.DataFrame, menus: list) -> pd.DataFrame:
                 if pd.notna(r.get(col)):
                     stores.loc[mask, col] = r[col]
             if pd.notna(r.get("open_hours")):
-                stores.loc[mask, "hours_source"] = "현장 조사"
+                stores.loc[mask, "hours_source"] = _manual_label(r)
     if price_csv.exists():
         mp = pd.read_csv(price_csv, dtype=str).dropna(subset=["store_id", "menu"])
         surveyed = set()
@@ -237,10 +245,10 @@ def attach_manual(stores: pd.DataFrame, menus: list) -> pd.DataFrame:
                 continue
             surveyed.add(r["store_id"])
             menus.append({"id": r["store_id"], "menu": r["menu"].strip(), "price": price,
-                          "price_source": f"현장 조사({r.get('checked_date', '')})"})
+                          "price_source": _manual_label(r), "manual": True})
             n_price += 1
-        # 현장 조사한 가게는 공공데이터 가격보다 현장 가격을 쓴다
-        menus[:] = [m for m in menus if m["id"] not in surveyed or m["price_source"].startswith("현장")]
+        # 직접 조사한 가게는 공공데이터 가격보다 조사한 가격을 쓴다
+        menus[:] = [m for m in menus if m["id"] not in surveyed or m.get("manual")]
     report["manual"] = {"store_info_rows": n_info, "menu_price_rows": n_price}
     return stores
 
