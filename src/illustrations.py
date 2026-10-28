@@ -255,6 +255,92 @@ def cloche():
     return frame("#F1F3F5", "#D0EBFF", c + face(320, 196))
 
 
+# ---------------------------------------------------------------- 홈 배너 마스코트 '밥친구'
+def mascot_svg() -> str:
+    """밥그릇 마스코트 + 주변에 떠 있는 음식들 (배경 투명, 420×260)."""
+    grains = "".join(f'<ellipse cx="{x}" cy="{y}" rx="5" ry="3" fill="#F1E9D8" transform="rotate({a} {x} {y})"/>'
+                     for x, y, a in [(170, 100, 20), (205, 88, -15), (245, 98, 35), (190, 122, -30), (232, 120, 10),
+                                     (262, 128, -20), (152, 130, 15)])
+    rice = ('<path d="M108 150 Q110 66 210 66 Q310 66 312 150 Z" fill="#FFFDF7"/>' + grains)
+    bowl_body = ('<path d="M100 150 A110 100 0 0 0 320 150 Z" fill="#fff" stroke="#F5C9AE" stroke-width="3"/>'
+                 '<path d="M106 176 Q210 196 314 176" stroke="#F26B3A" stroke-width="10" fill="none"/>'
+                 '<path d="M118 204 Q210 222 302 204" stroke="#FFB38A" stroke-width="6" fill="none"/>'
+                 '<rect x="176" y="242" width="68" height="14" rx="6" fill="#fff" stroke="#F5C9AE" stroke-width="3"/>'
+                 '<ellipse cx="210" cy="150" rx="110" ry="14" fill="none" stroke="#fff" stroke-width="6"/>')
+    chop = ('<rect x="300" y="20" width="11" height="150" rx="5" fill="#C8955C" transform="rotate(32 300 20)"/>'
+            '<rect x="322" y="18" width="11" height="150" rx="5" fill="#B07A45" transform="rotate(38 322 18)"/>')
+    arm = ('<ellipse cx="96" cy="176" rx="20" ry="15" fill="#fff" stroke="#F5C9AE" stroke-width="3" transform="rotate(-30 96 176)"/>'
+           '<ellipse cx="324" cy="186" rx="18" ry="14" fill="#fff" stroke="#F5C9AE" stroke-width="3"/>')
+    dumpling = ('<g transform="translate(46 70) rotate(-12)">'
+                '<path d="M-34 10 Q0 -40 34 10 Z" fill="#FFF4E6"/>'
+                '<path d="M-20 -6 l6 10 M-6 -14 l4 12 M8 -14 l-2 12 M22 -6 l-6 10" stroke="#E8C9A6" stroke-width="3" stroke-linecap="round"/>'
+                f'{face(0, 2, .3)}</g>')
+    sushi = ('<g transform="translate(378 78) rotate(10)">'
+             '<rect x="-30" y="-6" width="60" height="26" rx="12" fill="#fff"/>'
+             '<path d="M-34 0 Q0 -30 34 0 Q0 -10 -34 0 Z" fill="#FF8A5B"/>'
+             f'{face(0, 8, .28)}</g>')
+    drum = ('<g transform="translate(52 198) rotate(-30)">'
+            '<rect x="-5" y="-48" width="10" height="34" rx="5" fill="#FFF8F0"/>'
+            '<circle cx="-7" cy="-50" r="7" fill="#FFF8F0"/><circle cx="7" cy="-50" r="7" fill="#FFF8F0"/>'
+            '<ellipse cx="0" cy="0" rx="28" ry="32" fill="#E8890C"/>'
+            f'{face(0, 2, .3)}</g>')
+    bread = ('<g transform="translate(380 200) rotate(8)">'
+             '<path d="M-30 24 L-30 -2 Q-30 -24 0 -24 Q30 -24 30 -2 L30 24 Z" fill="#E8A24A"/>'
+             f'{face(0, 4, .3)}</g>')
+    sparkles = "".join(
+        f'<path d="M{x} {y - 9} L{x + 3} {y - 3} L{x + 9} {y} L{x + 3} {y + 3} L{x} {y + 9} L{x - 3} {y + 3} '
+        f'L{x - 9} {y} L{x - 3} {y - 3} Z" fill="#fff" opacity=".9"/>' for x, y in [(130, 30), (300, 236), (20, 130), (405, 145)])
+    backdrop = ('<circle cx="210" cy="150" r="118" fill="#FFD9C2"/>'
+                '<circle cx="210" cy="150" r="96" fill="#FFE7D6"/>')
+    body = (backdrop + steam([180, 240], 58, "#FFB38A") + chop + arm + bowl_body + rice + face(210, 188, 1.15)
+            + dumpling + sushi + drum + bread + sparkles.replace('fill="#fff"', 'fill="#FFB86B"'))
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 260" width="420" height="260">{body}</svg>'
+
+
+# ---------------------------------------------------------------- 스티커 (흰 테두리 + 작은 얼굴)
+W = 'stroke="#fff" stroke-width="7" stroke-linejoin="round" paint-order="stroke"'
+
+
+def _sticker(inner: str, size: int = 100) -> str:
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="{size}" height="{size}">{inner}</svg>'
+
+
+STICKERS = {
+    "onigiri": _sticker(
+        f'<path d="M50 10 Q60 10 86 70 Q90 86 74 88 L26 88 Q10 86 14 70 Q40 10 50 10 Z" fill="#fff" {W}/>'
+        '<path d="M50 10 Q60 10 86 70 Q90 86 74 88 L26 88 Q10 86 14 70 Q40 10 50 10 Z" fill="#FFFDF7" stroke="#EADFCB" stroke-width="2"/>'
+        '<rect x="34" y="62" width="32" height="26" rx="3" fill="#2B2B2B"/>' + face(50, 48, .42)),
+    "boba": _sticker(
+        f'<path d="M24 26 L76 26 L70 92 L30 92 Z" fill="#F3D9B1" {W}/>'
+        '<rect x="20" y="20" width="60" height="10" rx="5" fill="#FF8FA3"/>'
+        '<rect x="56" y="2" width="7" height="26" rx="3" fill="#FF6B8B" transform="rotate(12 56 2)"/>'
+        + "".join(f'<circle cx="{x}" cy="{y}" r="5" fill="#5C3D2E"/>' for x, y in [(38, 82), (50, 85), (62, 82), (44, 74), (56, 74)])
+        + face(50, 50, .4)),
+    "skewer": _sticker(
+        '<rect x="47" y="4" width="6" height="92" rx="3" fill="#C8955C"/>'
+        + "".join(f'<rect x="32" y="{y}" width="36" height="20" rx="10" fill="#F0592A" {W}/>' for y in (12, 36, 60))
+        + face(50, 46, .35)),
+    "dumpling": _sticker(
+        f'<path d="M8 66 Q50 0 92 66 Q50 84 8 66 Z" fill="#FFF4E6" {W}/>'
+        '<path d="M30 40 l6 12 M44 32 l3 14 M58 32 l-3 14 M72 40 l-6 12" stroke="#E8C9A6" stroke-width="3" stroke-linecap="round"/>'
+        + face(50, 60, .4)),
+    "heart": _sticker(f'<path d="M50 86 L14 50 Q2 34 16 20 Q32 8 50 28 Q68 8 84 20 Q98 34 86 50 Z" fill="#FF6B8B" {W}/>'
+                      '<ellipse cx="32" cy="32" rx="8" ry="5" fill="#fff" opacity=".6"/>'),
+    "star": _sticker(f'<path d="M50 6 L62 36 L94 38 L69 58 L78 90 L50 72 L22 90 L31 58 L6 38 L38 36 Z" fill="#FFD43B" {W}/>'
+                     + face(50, 54, .32)),
+}
+
+
+@lru_cache(maxsize=None)
+def sticker_uri(name: str) -> str:
+    return "data:image/svg+xml;base64," + base64.b64encode(STICKERS[name].encode("utf-8")).decode()
+
+
+@lru_cache(maxsize=1)
+def mascot_uri() -> str:
+    return "data:image/svg+xml;base64," + base64.b64encode(mascot_svg().encode("utf-8")).decode()
+
+
 ILLUSTRATIONS = {
     "bibimbap": bibimbap, "stew": stew, "noodle": noodle, "bbq": bbq, "tteokbokki": tteokbokki,
     "chicken": chicken, "burger": burger, "pizza": pizza, "bread": bread, "sushi": sushi, "jjajang": jjajang,
