@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 RESTAURANTS_CSV = DATA_DIR / "restaurants.csv"
+QR_IMAGE = ROOT / "assets" / "qr_bapmate.png"
 SOURCES_CSV = DATA_DIR / "sources.csv"
 QUALITY_REPORT = DATA_DIR / "quality_report.json"
 MANUAL_DIR = DATA_DIR / "manual"
