@@ -6,10 +6,13 @@ data/_test*/
 data/members.csv
 data/reviews.csv
 data/favorites.csv
+data/store_updates.csv
+data/visits.csv
 # 비밀 키 - 절대 올리지 않기
 .streamlit/secrets.toml
 .streamlit/secrets_cloud.toml
 .streamlit/cookie_secret.txt
+.streamlit/gh_token.txt
 *.json.key
 __pycache__/
 .venv/
