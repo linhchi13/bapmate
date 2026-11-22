@@ -22,7 +22,10 @@ TABLES = {
     # 가게 정보 수정: 팀 현장 조사(바로 반영) 또는 회원 제보(관리자 승인 후 반영)
     # 같은 update_id 가 여러 줄이면 마지막 줄의 status 가 최종 상태 (pending → approved / rejected)
     "store_updates": ["update_id", "user_id", "store_id", "menus", "open_hours", "source", "status", "created_at"],
+    # 조회수: 방문(브라우저 세션) 한 번에 한 줄. 누구인지는 저장하지 않는다 (channel = 주소의 ?src= 홍보 경로)
+    "visits": ["visited_at", "channel", "lang", "member"],
 }
+USER_TABLES = [tb for tb, cols in TABLES.items() if "user_id" in cols]  # 탈퇴 시 지울 표
 
 
 def now() -> str:
@@ -54,8 +57,11 @@ class CsvStorage:
         return df.reindex(columns=TABLES[table], fill_value="")
 
     def append(self, table: str, row: dict) -> None:
+        self.append_many(table, [row])
+
+    def append_many(self, table: str, rows: list[dict]) -> None:
         path = self._path(table)
-        new = pd.DataFrame([{c: row.get(c, "") for c in TABLES[table]}])
+        new = pd.DataFrame([{c: row.get(c, "") for c in TABLES[table]} for row in rows], columns=TABLES[table])
         new.to_csv(path, mode="a", header=not path.exists(), index=False, encoding="utf-8")
 
     def delete_where(self, table: str, column: str, value: str) -> None:
@@ -64,7 +70,7 @@ class CsvStorage:
         df[df[column] != value].to_csv(self._path(table), index=False, encoding="utf-8")
 
     def delete_user(self, user_id: str) -> None:
-        for table in TABLES:
+        for table in USER_TABLES:
             self.delete_where(table, "user_id", user_id)
 
 
@@ -97,7 +103,11 @@ class SheetsStorage:
         return pd.DataFrame(values[1:], columns=values[0]).reindex(columns=TABLES[table], fill_value="")
 
     def append(self, table: str, row: dict) -> None:
-        self._sheet(table).append_row([str(row.get(c, "")) for c in TABLES[table]], value_input_option="RAW")
+        self.append_many(table, [row])
+
+    def append_many(self, table: str, rows: list[dict]) -> None:
+        self._sheet(table).append_rows([[str(row.get(c, "")) for c in TABLES[table]] for row in rows],
+                                       value_input_option="RAW")
 
     def delete_where(self, table: str, column: str, value: str) -> None:
         ws = self._sheet(table)
@@ -108,7 +118,7 @@ class SheetsStorage:
             ws.delete_rows(r)
 
     def delete_user(self, user_id: str) -> None:
-        for table in TABLES:
+        for table in USER_TABLES:
             self.delete_where(table, "user_id", user_id)
 
 
@@ -144,9 +154,9 @@ class HubStorage(CsvStorage):
             self.api.upload_file(path_or_fileobj=str(self._path(table)), path_in_repo=f"{table}.csv",
                                  repo_id=self.repo, repo_type="dataset", commit_message=message)
 
-    def append(self, table: str, row: dict) -> None:
+    def append_many(self, table: str, rows: list[dict]) -> None:  # append 도 이것을 거친다
         with self.lock:
-            super().append(table, row)
+            super().append_many(table, rows)
             self._push(table, f"add {table}")
 
     def delete_where(self, table: str, column: str, value: str) -> None:
@@ -156,7 +166,7 @@ class HubStorage(CsvStorage):
 
     def delete_user(self, user_id: str) -> None:
         with self.lock:
-            for table in TABLES:
+            for table in USER_TABLES:
                 CsvStorage.delete_where(self, table, "user_id", user_id)
                 self._push(table, "delete user")
 
@@ -178,6 +188,11 @@ def read_table(table: str) -> pd.DataFrame:
 
 def append_row(table: str, row: dict) -> None:
     get_storage().append(table, row)
+    read_table.clear()
+
+
+def append_rows(table: str, rows: list[dict]) -> None:
+    get_storage().append_many(table, rows)
     read_table.clear()
 
 
