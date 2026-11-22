@@ -4,6 +4,7 @@
 """
 import streamlit as st
 
+from src.analytics import track_visit
 from src.auth import current_member, current_user_id, is_admin, sidebar_account, signup_form
 from src.data import DataError, load_restaurants
 from src.i18n import LANGUAGES, current_lang, t
@@ -49,6 +50,7 @@ pages = {
     ],
     t("nav.section_info"): [
         st.Page("views/stats.py", title=t("nav.stats"), icon="📊"),
+        st.Page("views/project.py", title=t("nav.project"), icon="🚀"),
         st.Page("views/about.py", title=t("nav.about"), icon="ℹ️"),
     ],
 }
@@ -59,6 +61,7 @@ st.sidebar.markdown(f"### 🍚 {t('app.name')}\n{t('app.name_en')}")
 st.sidebar.caption(t("app.tagline"))
 sidebar_account()
 show_pending_toast()
+track_visit(st.session_state["lang"], bool(current_member()))  # 조회수 (세션당 1회)
 
 # 로그인은 했지만 아직 가입(닉네임 등록)을 안 했으면 가입 화면부터
 if current_user_id() and not current_member():
