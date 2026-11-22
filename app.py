@@ -2,9 +2,22 @@
 
 실행:  streamlit run app.py
 """
+import importlib
+import sys
+
 import streamlit as st
 
-from src.analytics import track_visit
+# 서버(Streamlit Cloud)는 코드가 바뀌어도 예전 src 모듈을 메모리에 들고 있다.
+# 버전 값이 달라지면 src 모듈을 모두 비워서 새 코드로 다시 불러온다 (Reboot 없이 업데이트).
+CODE_VERSION = "2026-11-22"
+if getattr(sys.modules.get("src"), "CODE_VERSION", None) != CODE_VERSION:
+    for name in [m for m in sys.modules if m == "src" or m.startswith("src.")]:
+        del sys.modules[name]
+    importlib.invalidate_caches()
+    import src  # noqa: E402
+    src.CODE_VERSION = CODE_VERSION
+
+from src.analytics import track_visit  # noqa: E402
 from src.auth import current_member, current_user_id, is_admin, sidebar_account, signup_form
 from src.data import DataError, load_restaurants
 from src.i18n import LANGUAGES, current_lang, t
