@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT.parent / "bapmate_upload"
 
 EXCLUDE_DIRS = {"raw", "__pycache__", ".venv", "_test_storage"}
-EXCLUDE_FILES = {"secrets.toml", "secrets_cloud.toml", "members.csv", "reviews.csv", "favorites.csv"}
+EXCLUDE_FILES = {"secrets.toml", "secrets_cloud.toml", "gh_token.txt", "deploy.bat", "members.csv", "reviews.csv", "favorites.csv",
+                 "store_updates.csv", "visits.csv"}
 
 
 def wanted(path: Path) -> bool:
