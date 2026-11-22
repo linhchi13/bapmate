@@ -28,6 +28,9 @@ def main() -> None:
     s.headers.update({"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"})
 
     me = s.get(f"{API}/user", timeout=30)
+    if me.status_code == 401:  # deploy.bat 은 종료 코드 2 를 보고 저장된 토큰을 지운다
+        print("GitHub 토큰이 틀렸거나 만료되었습니다. 새 토큰을 만들어 다시 실행하세요.")
+        sys.exit(2)
     me.raise_for_status()
     owner = me.json()["login"]
 
