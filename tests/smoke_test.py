@@ -18,7 +18,8 @@ from src import config, storage  # noqa: E402
 from src.filters import apply_filters, price_band, search  # noqa: E402
 
 APP = str(ROOT / "app.py")
-PAGES = ["views/home.py", "views/themes.py", "views/stats.py", "views/mypage.py", "views/about.py"]
+PAGES = ["views/home.py", "views/themes.py", "views/stats.py", "views/mypage.py", "views/project.py",
+         "views/about.py"]
 failures = []
 
 # 테스트용 임시 저장소로 바꿔치기
@@ -74,6 +75,17 @@ try:
     # (같은 세션에서 다시 '한국어'를 누르는 동작은 AppTest 의 제약으로 브라우저에서 따로 확인함)
     at = run_app()
     check("default language is Korean", any("맛집 탐험" in m.value for m in at.markdown))
+
+    # 2-2) 조회수: 세션마다 1회, ?src= 홍보 경로 기록, 모아서 저장
+    from src.analytics import flush, visits  # noqa: E402
+    at = AppTest.from_file(APP, default_timeout=60)
+    at.query_params["src"] = "qr"
+    at.run()
+    at.text_input(key="home_q").input("국수").run()  # 같은 세션에서 다시 실행해도 조회수는 그대로
+    flush()
+    v = visits()
+    check("visit counted once per session with channel", (v["channel"] == "qr").sum() == 1, v["channel"].tolist())
+    check("visits saved to storage", len(storage.read_table("visits")) == len(v) > 0)
 
     # 3) 필터 함수
     from src.data import _clean_price, get_data, load_reviews, save_review  # noqa: E402
