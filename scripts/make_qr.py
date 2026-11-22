@@ -15,7 +15,7 @@ OUT = ROOT / "assets" / "qr_bapmate.png"
 
 def main() -> None:
     qr = qrcode.QRCode(box_size=12, border=2, error_correction=qrcode.constants.ERROR_CORRECT_M)
-    qr.add_data(URL)
+    qr.add_data(URL + "/?src=qr")  # ?src=qr: QR 로 들어온 조회수를 따로 셀 수 있게
     code = qr.make_image(fill_color="#3B2A20", back_color="white").convert("RGB")
 
     # 아래에 서비스 이름과 주소를 적은 카드 형태로
