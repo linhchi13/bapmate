@@ -179,8 +179,13 @@ class HubStorage(CsvStorage):
                 self._push(table, "delete user")
 
 
+# 캐시는 서버가 켜져 있는 동안 코드가 바뀌어도 남아 있다. 표 구조(SCHEMA)를 캐시 인자로 넘겨서,
+# 열이 추가되는 업데이트를 하면 예전 구조의 저장소 객체·읽은 표를 쓰지 않고 새로 만들게 한다.
+SCHEMA = repr(TABLES)
+
+
 @st.cache_resource
-def get_storage():
+def _storage(schema: str):
     if secret_section("gsheets"):
         return SheetsStorage(secret_section("gsheets"))
     if secret_section("hfdata"):
@@ -188,10 +193,21 @@ def get_storage():
     return CsvStorage(DATA_DIR)
 
 
+def get_storage():
+    return _storage(SCHEMA)
+
+
 @st.cache_data(ttl=60, show_spinner=False)
+def _read(table: str, schema: str) -> pd.DataFrame:
+    return get_storage().read(table)
+
+
 def read_table(table: str) -> pd.DataFrame:
     """읽기는 60초 동안 캐시(Google Sheets 호출 횟수 제한 때문). 쓰기 후에는 캐시를 비운다."""
-    return get_storage().read(table)
+    return _read(table, SCHEMA)
+
+
+read_table.clear = _read.clear  # 기존 코드의 read_table.clear() 를 그대로 쓸 수 있게
 
 
 def append_row(table: str, row: dict) -> None:
