@@ -8,6 +8,7 @@ QR_IMAGE = ROOT / "assets" / "qr_bapmate.png"
 SOURCES_CSV = DATA_DIR / "sources.csv"
 QUALITY_REPORT = DATA_DIR / "quality_report.json"
 MANUAL_DIR = DATA_DIR / "manual"
+STORE_NOTES_CSV = MANUAL_DIR / "store_notes.csv"  # 웹 후기에서 칭찬한 점 (팀이 직접 읽고 요약, 출처 포함)
 IMAGES_DIR = ROOT / "assets" / "images"  # 팀이 직접 찍은 가게 사진 (없으면 src/illustrations.py 의 일러스트 사용)
 
 # 서울과학기술대학교 기준 좌표: 학교 공식 주소(공릉로 232)의 좌표.
