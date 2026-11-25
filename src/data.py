@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from src.config import MIN_VOTES, MIN_YES_RATIO, RESTAURANTS_CSV
+from src.config import HIGHLIGHT_TAGS, MIN_VOTES, MIN_YES_RATIO, RESTAURANTS_CSV
 from src.storage import TABLES, append_row, now, read_table
 
 MAX_VALID_PRICE = 100_000
@@ -75,7 +75,7 @@ def load_reviews() -> pd.DataFrame:
 
 
 def save_review(user_id: str, store_id: str, stars: int, solo_ok: str, group_ok: str,
-                price_paid, comment: str) -> None:
+                price_paid, comment: str, tags=(), best_menu: str = "") -> None:
     append_row("reviews", {
         "review_id": uuid.uuid4().hex[:12],
         "user_id": user_id,
@@ -86,7 +86,26 @@ def save_review(user_id: str, store_id: str, stars: int, solo_ok: str, group_ok:
         "price_paid": "" if price_paid is None else int(price_paid),
         "comment": comment.strip()[:200],
         "created_at": now(),
+        "tags": ",".join(tg for tg in tags if tg in HIGHLIGHT_TAGS),
+        "best_menu": best_menu.strip()[:30],
     })
+
+
+def store_highlights(reviews: pd.DataFrame) -> pd.DataFrame:
+    """가게별 '좋은 점'(학생들이 고른 태그와 고른 사람 수, 많은 순)과 가장 많이 추천된 메뉴.
+    → id, highlights [(태그, 명), ...], best_menu, best_menu_n"""
+    cols = ["id", "highlights", "best_menu", "best_menu_n"]
+    if reviews.empty:
+        return pd.DataFrame(columns=cols)
+    rows = []
+    for sid, g in reviews.groupby("store_id"):
+        tags = g["tags"].fillna("").str.split(",").explode().str.strip()
+        counts = tags[tags.isin(HIGHLIGHT_TAGS)].value_counts()
+        menus = g["best_menu"].fillna("").str.strip()
+        menus = menus[menus != ""].value_counts()
+        rows.append({"id": sid, "highlights": list(counts.items()),
+                     "best_menu": menus.index[0] if len(menus) else "", "best_menu_n": int(menus.iloc[0]) if len(menus) else 0})
+    return pd.DataFrame(rows, columns=cols)
 
 
 def aggregate_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
@@ -183,7 +202,12 @@ def _apply_updates(df: pd.DataFrame) -> pd.DataFrame:
 def get_data() -> pd.DataFrame:
     """가게 목록 + 현장 조사/제보 + 학생 평가 요약을 합친 표. 화면은 모두 이 표를 쓴다."""
     df = _apply_updates(load_restaurants())
-    df = df.merge(aggregate_reviews(load_reviews()), on="id", how="left")
+    reviews = load_reviews()
+    df = df.merge(aggregate_reviews(reviews), on="id", how="left")
+    df = df.merge(store_highlights(reviews), on="id", how="left")
+    df["highlights"] = df["highlights"].map(lambda v: v if isinstance(v, list) else [])
+    df["best_menu"] = df["best_menu"].fillna("")
+    df["best_menu_n"] = df["best_menu_n"].fillna(0).astype(int)
     for col in ("rating_count", "solo_yes", "solo_votes", "group_yes", "group_votes", "student_price_n"):
         df[col] = df[col].fillna(0).astype(int)
     df["solo_verified"] = _verified(df["solo_yes"], df["solo_votes"])
