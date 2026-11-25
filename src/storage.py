@@ -17,7 +17,7 @@ from src.config import DATA_DIR
 TABLES = {
     "members": ["user_id", "nickname", "nationality", "joined_at"],
     "reviews": ["review_id", "user_id", "store_id", "stars", "solo_ok", "group_ok", "price_paid",
-                "comment", "created_at"],
+                "comment", "created_at", "tags", "best_menu"],  # tags: 좋은 점(쉼표로 구분), best_menu: 추천 메뉴
     "favorites": ["user_id", "store_id", "action", "created_at"],
     # 가게 정보 수정: 팀 현장 조사(바로 반영) 또는 회원 제보(관리자 승인 후 반영)
     # 같은 update_id 가 여러 줄이면 마지막 줄의 status 가 최종 상태 (pending → approved / rejected)
@@ -61,6 +61,11 @@ class CsvStorage:
 
     def append_many(self, table: str, rows: list[dict]) -> None:
         path = self._path(table)
+        if path.exists():  # 열이 새로 생긴 표: 기존 파일의 머리글을 새 열 목록으로 바꿔 다시 쓴다
+            with path.open(encoding="utf-8") as f:
+                header = f.readline().strip().split(",")
+            if header != TABLES[table]:
+                self.read(table).to_csv(path, index=False, encoding="utf-8")
         new = pd.DataFrame([{c: row.get(c, "") for c in TABLES[table]} for row in rows], columns=TABLES[table])
         new.to_csv(path, mode="a", header=not path.exists(), index=False, encoding="utf-8")
 
@@ -106,7 +111,10 @@ class SheetsStorage:
         self.append_many(table, [row])
 
     def append_many(self, table: str, rows: list[dict]) -> None:
-        self._sheet(table).append_rows([[str(row.get(c, "")) for c in TABLES[table]] for row in rows],
+        ws = self._sheet(table)
+        if ws.row_values(1) != TABLES[table]:  # 열이 새로 생긴 표: 머리글 줄만 새 열 목록으로
+            ws.update([TABLES[table]], "A1")
+        ws.append_rows([[str(row.get(c, "")) for c in TABLES[table]] for row in rows],
                                        value_input_option="RAW")
 
     def delete_where(self, table: str, column: str, value: str) -> None:
