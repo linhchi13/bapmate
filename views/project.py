@@ -87,7 +87,5 @@ for i, b in enumerate(blocks):
     with cols[i % 3].container(border=True):
         st.markdown(f"**{t(f'bm.{b}.title')}**")
         st.markdown(t(f"bm.{b}.body"))
-st.markdown(f"##### {t('project.bm_revenue_title')}")
-st.markdown(t("project.bm_revenue"))
 st.markdown(f"##### {t('project.bm_roadmap_title')}")
 st.markdown(t("project.bm_roadmap"))
