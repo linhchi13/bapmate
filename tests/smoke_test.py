@@ -98,6 +98,9 @@ try:
     from src.data import _clean_price, get_data, load_reviews, save_review  # noqa: E402
     df = get_data()
     check("data has rows", len(df) > 0, f"{len(df)} rows")
+    notes = df[df["note_ko"].fillna("") != ""]
+    check("web review notes loaded with source", len(notes) > 0 and (notes["note_url"].str.startswith("http")).all(),
+          len(notes))
     check("vietnamese filter", (apply_filters(df, cuisines=["vietnamese"])["cuisine"] == "vietnamese").all())
     cheap = apply_filters(df, max_price=8000)
     check("budget filter <= 8000", (cheap["budget_price"] <= 8000).all(), f"{len(cheap)} rows")
