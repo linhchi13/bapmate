@@ -142,6 +142,27 @@ try:
     check("review aggregate", row["rating_count"] == 3 and abs(row["rating_avg"] - 13 / 3) < 1e-9)
     check("solo verified after 3 yes votes", bool(row["solo_verified"]) and not bool(row["group_verified"]))
 
+    # 6-0) 좋은 점·추천 메뉴: 학생들이 고른 것만 집계, 모르는 태그는 버림
+    save_review("tag0", sid, 4, "skip", "skip", None, "", ["cheap", "friendly", "hack"], "김치찌개")
+    save_review("tag1", sid, 5, "skip", "skip", None, "", ["cheap"], "김치찌개")
+    row = get_data().set_index("id").loc[sid]
+    check("highlights aggregated", row["highlights"][:2] == [("cheap", 2), ("friendly", 1)]
+          and row["best_menu"] == "김치찌개" and row["best_menu_n"] == 2, (row["highlights"], row["best_menu"]))
+    for u in ("tag0", "tag1"):  # 뒤의 관리자 테스트가 평가 수를 세므로 지워 둔다
+        storage.delete_rows("reviews", "user_id", u)
+
+    # 6-0-1) 예전 형식(열이 적은) 평가 파일에 새 평가를 더해도 깨지지 않음
+    old = TMP / "reviews.csv"
+    keep = old.read_text(encoding="utf-8")
+    old.write_text("review_id,user_id,store_id,stars,solo_ok,group_ok,price_paid,comment,created_at\n"
+                   "r1,u1,s1,5,yes,no,,hi,2026-11-01 10:00:00\n", encoding="utf-8")
+    storage.append_row("reviews", {"review_id": "r2", "user_id": "u2", "store_id": "s1", "stars": 4, "tags": "cheap"})
+    mig = storage.read_table("reviews")
+    check("old review file migrated", len(mig) == 2 and mig.iloc[0]["comment"] == "hi" and mig.iloc[1]["tags"] == "cheap",
+          mig.to_dict("records"))
+    old.write_text(keep, encoding="utf-8")
+    storage.read_table.clear()
+
     # 6-1) 가격·영업시간: 회원 제보는 승인 전에는 반영되지 않고, 승인 후 반영
     from src.data import encode_menus, load_store_updates, save_store_update  # noqa: E402
     sid2 = df[df["budget_price"].isna() & (df["id"] != sid)]["id"].iloc[0]  # 앞에서 평가(학생 제보 가격)한 가게는 제외
