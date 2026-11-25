@@ -164,14 +164,15 @@ def has(value) -> bool:
 def naver_url(r: pd.Series) -> str:
     """네이버 지도 검색 링크. '구 이름 + 가게 이름'으로 찾으면 정확도가 가장 높다.
     단, 공공데이터의 가게 이름은 사업자 등록 이름이라 네이버 이름과 다르면 '결과 없음'이 나온다
-    (예: 메가엠지씨커피월계사슴점 ↔ 메가MGC커피 월계사슴점). 그래서 주소 링크(naver_addr_url)도 같이 보여 준다."""
+    (예: 메가엠지씨커피월계사슴점 ↔ 메가MGC커피 월계사슴점). 그래서 정확한 위치 링크(location_url)도 같이 보여 준다."""
     area = r["district"] if has(r.get("district")) else "노원구"
     return "https://map.naver.com/p/search/" + quote(f"{area} {r['name']}")
 
 
-def naver_addr_url(r: pd.Series) -> str:
-    """네이버 지도 주소 검색 링크. 항상 그 건물이 열리고 '이 주소의 장소' 목록에 가게가 나온다."""
-    return "https://map.naver.com/p/search/" + quote(str(r["address"]))
+def location_url(r: pd.Series) -> str:
+    """카카오맵에 우리 데이터의 좌표로 핀을 꽂는 링크. 검색이 아니라서 이름이 달라도 항상 정확한 위치가 열린다.
+    (네이버 주소 검색은 건물만 열리고 그 건물의 다른 가게가 먼저 보여서 헷갈렸다)"""
+    return f"https://map.kakao.com/link/map/{quote(str(r['name']))},{r['lat']},{r['lon']}"
 
 
 def map_links(r: pd.Series) -> dict:
@@ -181,8 +182,8 @@ def map_links(r: pd.Series) -> dict:
     links = {}
     if has(r.get("address")):
         links["naver"] = naver_url(r)
-        links["naver_addr"] = naver_addr_url(r)
     if has(r.get("lat")) and has(r.get("lon")):
+        links["location"] = location_url(r)
         links["kakao"] = f"https://map.kakao.com/link/to/{quote(name)},{r['lat']},{r['lon']}"
     return links
 
@@ -217,8 +218,8 @@ def _price_html(r: pd.Series) -> str:
         return f'<div class="bm-price">{fmt_won(r["budget_price"])}{t("common.from")} <small>{html.escape(str(r["signature_menu"]) if has(r.get("signature_menu")) else "")}{note}</small></div>'
     return (f'<div class="bm-price na">{t("common.no_price")} · '
             f'<a class="bm-naver" href="{naver_url(r)}" target="_blank" rel="noopener">{t("common.see_naver")}</a>'
-            + (f' · <a class="bm-naver" href="{naver_addr_url(r)}" target="_blank" rel="noopener">{t("common.see_naver_addr")}</a>'
-               if has(r.get("address")) else "") + '</div>')
+            + (f' · <a class="bm-naver" href="{location_url(r)}" target="_blank" rel="noopener">{t("common.see_location")}</a>'
+               if has(r.get("lat")) and has(r.get("lon")) else "") + '</div>')
 
 
 def _rating_text(r: pd.Series) -> str:
@@ -412,7 +413,7 @@ def show_detail(store_id: str) -> None:
         st.caption(t("common.no_price"))
     if not items or not has(r.get("open_hours")):  # 모르는 정보는 네이버에서 바로 확인
         st.link_button(t("detail.naver_info"), naver_url(r), type="primary", width="stretch")
-        if has(r.get("address")):
+        if has(r.get("lat")) and has(r.get("lon")):
             st.caption(t("detail.naver_hint"))
     if r["student_price_n"] > 0:
         st.caption(t("detail.student_price", price=f"{int(r['student_price']):,}", n=r["student_price_n"]))
