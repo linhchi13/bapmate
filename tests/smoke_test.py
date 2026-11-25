@@ -14,7 +14,14 @@ import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
+import re  # noqa: E402
+
+import src  # noqa: E402
 from src import config, storage  # noqa: E402
+
+# app.py 는 CODE_VERSION 이 다르면 src 모듈을 새로 불러온다. 그러면 아래에서 바꿔치기한 임시 저장소가
+# 무시되고 실제 data/ 에 써 버리므로, 테스트에서는 같은 버전으로 맞춰 둔다.
+src.CODE_VERSION = re.search(r'CODE_VERSION = "(.+?)"', (ROOT / "app.py").read_text(encoding="utf-8")).group(1)
 from src.filters import apply_filters, price_band, search  # noqa: E402
 
 APP = str(ROOT / "app.py")
