@@ -132,6 +132,7 @@ CSS = f"""
 .bm-meta {{ font-size: .84rem; color: #4B5563; margin-top: 2px; }}
 .bm-cta {{ color: {PRIMARY}; font-weight: 600; }}
 .bm-hl {{ color: #2B8A3E; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+.bm-note {{ color: #1971C2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
 .bm-empty {{ text-align: center; padding: 40px 10px; color: #6B7280; }}
 .bm-empty div {{ font-size: 2.6rem; }}
 </style>
@@ -205,6 +206,12 @@ def _highlight_text(r: pd.Series, top: int = 3) -> str:
     return " · ".join(parts)
 
 
+def _web_note(r: pd.Series) -> str:
+    """웹 후기에서 칭찬한 점 (현재 언어, 없으면 한국어). 없으면 빈 문자열."""
+    note = r.get(f"note_{current_lang()}") if has(r.get(f"note_{current_lang()}")) else r.get("note_ko")
+    return str(note) if has(note) else ""
+
+
 def _rating_html(r: pd.Series) -> str:
     """카드용: 평가가 없으면 첫 평가를 부탁하는 문구."""
     if r["rating_count"] > 0:
@@ -239,6 +246,7 @@ def card_html(r: pd.Series) -> str:
         + f'<div class="bm-meta">{_distance_text(r)}</div>'
         + _rating_html(r)
         + (f'<div class="bm-meta bm-hl">{_highlight_text(r)}</div>' if _highlight_text(r) else "")
+        + (f'<div class="bm-meta bm-note">👍 {html.escape(_web_note(r))}</div>' if _web_note(r) else "")
     )
 
 
@@ -397,6 +405,11 @@ def show_detail(store_id: str) -> None:
         st.caption(t("common.no_price"))
     if r["student_price_n"] > 0:
         st.caption(t("detail.student_price", price=f"{int(r['student_price']):,}", n=r["student_price_n"]))
+
+    if _web_note(r):
+        st.markdown(f"**👍 {t('detail.web_note')}**  \n{html.escape(_web_note(r))}")
+        st.caption(t("detail.web_note_source", src=r["note_source"], date=r["note_date"])
+                   + f" · [{t('detail.web_note_link')}]({r['note_url']})")
 
     st.caption(t("detail.source", src=r["source"], date=r["data_date"]))
 
