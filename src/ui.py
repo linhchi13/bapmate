@@ -9,9 +9,9 @@ import streamlit as st
 
 from src.auth import (current_member, current_user_id, favorite_ids, is_admin, login_button, members_table,
                       set_favorite)
-from src.config import CUISINE_COLOR, IMAGES_DIR, MIN_VOTES, MIN_YES_RATIO
+from src.config import CUISINE_COLOR, HIGHLIGHT_TAGS, IMAGES_DIR, MIN_VOTES, MIN_YES_RATIO
 from src.data import encode_menus, get_data, load_reviews, parse_menus, save_review, save_store_update
-from src.i18n import area_label, cuisine_label, current_lang, nationality_label, source_label, t
+from src.i18n import area_label, cuisine_label, current_lang, lang_key, nationality_label, source_label, t
 from src.illustrations import illustration_key, illustration_uri
 
 PRIMARY = "#F26B3A"
@@ -131,6 +131,7 @@ CSS = f"""
 .bm-price.na {{ font-size: .88rem; color: #9CA3AF; font-weight: 500; }}
 .bm-meta {{ font-size: .84rem; color: #4B5563; margin-top: 2px; }}
 .bm-cta {{ color: {PRIMARY}; font-weight: 600; }}
+.bm-hl {{ color: #2B8A3E; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
 .bm-empty {{ text-align: center; padding: 40px 10px; color: #6B7280; }}
 .bm-empty div {{ font-size: 2.6rem; }}
 </style>
@@ -196,6 +197,14 @@ def _rating_text(r: pd.Series) -> str:
     return t("common.no_rating")
 
 
+def _highlight_text(r: pd.Series, top: int = 3) -> str:
+    """학생들이 고른 좋은 점 + 추천 메뉴 한 줄. 예) '💰 가성비 좋아요 2 · 😊 친절해요 1 · 🍴 김치찌개'"""
+    parts = [f"{t(f'tag.{tag}')} {n}" for tag, n in r["highlights"][:top]]
+    if r["best_menu"]:
+        parts.append(f"🍴 {html.escape(str(r['best_menu']))}")
+    return " · ".join(parts)
+
+
 def _rating_html(r: pd.Series) -> str:
     """카드용: 평가가 없으면 첫 평가를 부탁하는 문구."""
     if r["rating_count"] > 0:
@@ -229,6 +238,7 @@ def card_html(r: pd.Series) -> str:
         + _price_html(r)
         + f'<div class="bm-meta">{_distance_text(r)}</div>'
         + _rating_html(r)
+        + (f'<div class="bm-meta bm-hl">{_highlight_text(r)}</div>' if _highlight_text(r) else "")
     )
 
 
@@ -365,6 +375,12 @@ def show_detail(store_id: str) -> None:
         st.markdown(f"**🕒 {t('detail.hours')}**  \n{hours}{src}")
     with c2:
         st.markdown(f"**⭐ {t('detail.rating')}**  \n{_rating_text(r)}")
+        if r["highlights"]:
+            st.markdown(f"**✨ {t('detail.highlights')}**  \n"
+                        + " · ".join(t("detail.tag_count", tag=t(f"tag.{tag}"), n=n) for tag, n in r["highlights"]))
+        if r["best_menu"]:
+            st.markdown(f"**🍴 {t('detail.best_menu')}**  \n"
+                        + t("detail.best_menu_value", menu=html.escape(str(r["best_menu"])), n=r["best_menu_n"]))
         # 혼밥·모임 추천은 응답이 충분히 모였을 때만 보여 준다
         if r["solo_votes"] >= MIN_VOTES:
             st.markdown(f"**🙋 {t('detail.solo')}**  \n{_vote_text(r['solo_yes'], r['solo_votes'])}")
@@ -428,6 +444,9 @@ def _review_form(store_id: str) -> None:
         c1, c2 = st.columns(2)
         solo = c1.radio(t("review.solo"), list(opts), format_func=opts.get, index=2, horizontal=True)
         group = c2.radio(t("review.group"), list(opts), format_func=opts.get, index=2, horizontal=True)
+        tags = st.pills(t("review.tags"), HIGHLIGHT_TAGS, format_func=lambda k: t(f"tag.{k}"),
+                        selection_mode="multi", key=lang_key(f"tags_{store_id}"))
+        best_menu = st.text_input(t("review.best_menu"), max_chars=30, placeholder=t("review.best_menu_hint"))
         price = st.text_input(t("review.price_paid"))
         comment = st.text_input(t("review.comment"), max_chars=200)
         st.caption(t("review.privacy"))
@@ -442,7 +461,7 @@ def _review_form(store_id: str) -> None:
                     st.error(t("review.invalid_price"))
                     return
                 price_value = int(digits)
-            save_review(uid, store_id, stars + 1, solo, group, price_value, comment)
+            save_review(uid, store_id, stars + 1, solo, group, price_value, comment, tags or [], best_menu)
             st.session_state["toast"] = t("review.saved")
             st.rerun()
 
