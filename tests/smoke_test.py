@@ -86,12 +86,12 @@ try:
     # 2-1-1) 룰렛: 고른 음식 중 하나가 뽑히고, 그 음식 가게 목록이 나옴. 6개 이상 고르면 돌릴 수 없음
     at = AppTest.from_file(APP, default_timeout=60)
     at.switch_page("views/roulette.py").run()
-    at.pills(key="roulette_pick_ko").set_value(["chicken", "pizza"]).run()
+    at.pills(key="roulette_pick_ko").set_value(["jjajangmyeon", "jjamppong"]).run()
     button(at, "🎡 룰렛 돌리기!").click().run()
     md = " ".join(m.value for m in at.markdown)
-    check("roulette picks one of the chosen foods", not at.exception and ("치킨 먹자" in md or "피자 먹자" in md)
+    check("roulette picks one of the chosen foods", not at.exception and ("짜장면 먹자" in md or "짬뽕 먹자" in md)
           and "가까운 가게" in md, [e.value for e in at.exception])
-    at.pills(key="roulette_pick_ko").set_value(["chicken", "pizza", "sushi", "pho", "mala", "burger"]).run()
+    at.pills(key="roulette_pick_ko").set_value(["chicken", "pizza", "sushi", "pho", "malatang", "jjamppong"]).run()
     check("roulette blocks more than 5", button(at, "🎡 룰렛 돌리기!").disabled and len(at.warning) == 1)
 
     # 2-2) 조회수: 세션마다 1회, ?src= 홍보 경로 기록, 모아서 저장
