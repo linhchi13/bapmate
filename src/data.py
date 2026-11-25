@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from src.config import HIGHLIGHT_TAGS, MIN_VOTES, MIN_YES_RATIO, RESTAURANTS_CSV
+from src.config import HIGHLIGHT_TAGS, MIN_VOTES, MIN_YES_RATIO, RESTAURANTS_CSV, STORE_NOTES_CSV
 from src.storage import TABLES, append_row, now, read_table
 
 MAX_VALID_PRICE = 100_000
@@ -199,9 +199,24 @@ def _apply_updates(df: pd.DataFrame) -> pd.DataFrame:
     return df.reset_index()
 
 
+@st.cache_data
+def _read_notes(mtime: float) -> pd.DataFrame:  # mtime 은 캐시 구분용
+    n = pd.read_csv(STORE_NOTES_CSV, dtype=str).fillna("")
+    return n.rename(columns={"store_id": "id", "source": "note_source", "url": "note_url",
+                             "checked_date": "note_date"}).drop(columns=["store_name"])
+
+
+def load_store_notes() -> pd.DataFrame:
+    """웹 후기에서 칭찬한 점 (data/manual/store_notes.csv). 없으면 빈 표."""
+    if not STORE_NOTES_CSV.exists():
+        return pd.DataFrame(columns=["id", "note_ko", "note_en", "note_source", "note_url", "note_date"])
+    return _read_notes(STORE_NOTES_CSV.stat().st_mtime)
+
+
 def get_data() -> pd.DataFrame:
-    """가게 목록 + 현장 조사/제보 + 학생 평가 요약을 합친 표. 화면은 모두 이 표를 쓴다."""
+    """가게 목록 + 현장 조사/제보 + 웹 후기 요약 + 학생 평가 요약을 합친 표. 화면은 모두 이 표를 쓴다."""
     df = _apply_updates(load_restaurants())
+    df = df.merge(load_store_notes(), on="id", how="left")
     reviews = load_reviews()
     df = df.merge(aggregate_reviews(reviews), on="id", how="left")
     df = df.merge(store_highlights(reviews), on="id", how="left")
