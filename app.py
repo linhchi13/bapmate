@@ -9,11 +9,16 @@ import streamlit as st
 
 # 서버(Streamlit Cloud)는 코드가 바뀌어도 예전 src 모듈을 메모리에 들고 있다.
 # 버전 값이 달라지면 src 모듈을 모두 비워서 새 코드로 다시 불러온다 (Reboot 없이 업데이트).
-CODE_VERSION = "2026-11-25i"
+CODE_VERSION = "2026-11-25j"
 if getattr(sys.modules.get("src"), "CODE_VERSION", None) != CODE_VERSION:
     for name in [m for m in sys.modules if m == "src" or m.startswith("src.")]:
         del sys.modules[name]
     importlib.invalidate_caches()
+    try:  # 페이지 파일(views/*.py)도 미리 컴파일해 둔 것을 지워서 새 코드로 실행되게
+        from streamlit.runtime import Runtime
+        Runtime.instance()._script_cache.clear()
+    except Exception:  # Streamlit 내부 구조가 바뀌어도 앱은 계속 동작
+        pass
     import src  # noqa: E402
     src.CODE_VERSION = CODE_VERSION
 
