@@ -43,6 +43,9 @@ DEFAULT_BUDGET_BANDS = (8000, 12000)
 MIN_VOTES = 3
 MIN_YES_RATIO = 0.6
 
+# 평가할 때 고르는 '이 가게의 좋은 점' (화면 문구는 locales 의 tag.<키>)
+HIGHLIGHT_TAGS = ["cheap", "tasty", "portion", "friendly", "service"]
+
 # 상가(상권)정보 업종 → 앱에서 쓰는 음식 종류
 # (중분류, 소분류) 순서로 찾고, 소분류 규칙이 없으면 중분류 규칙을 쓴다.
 CUISINE_BY_SUB = {
