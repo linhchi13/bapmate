@@ -11,7 +11,8 @@ from src.data import get_data
 from src.i18n import lang_key, t
 from src.ui import page_header, render_grid
 
-COLORS = ["#F26B3A", "#F59F00", "#2B8A3E", "#1971C2", "#AE3EC9"]
+COLORS = ["#FFC4B2", "#FFE3A3", "#C6EBC9", "#BFDDF7", "#E3CCF2"]  # 파스텔: 복숭아·노랑·민트·하늘·라벤더
+TEXT = "#4A3428"
 SPIN_SECONDS = 4
 
 df = get_data()
@@ -25,24 +26,27 @@ def label(key: str) -> str:
 
 def wheel_svg(items: list) -> str:
     """룰렛 판 그림(SVG). 0번 칸이 12시 방향에서 시작해 시계 방향으로 놓인다."""
-    size, r = 320, 150
+    size, r = 320, 146
     c = size / 2
     seg = 360 / len(items)
-    parts = []
+    parts = [f'<circle cx="{c}" cy="{c}" r="{r + 8}" fill="#FFF7F2" stroke="#FFD9C7" stroke-width="4"/>']  # 바깥 테두리
     for i, key in enumerate(items):
         a0, a1 = math.radians(i * seg), math.radians((i + 1) * seg)
         x0, y0 = c + r * math.sin(a0), c - r * math.cos(a0)
         x1, y1 = c + r * math.sin(a1), c - r * math.cos(a1)
         large = 1 if seg > 180 else 0
         parts.append(f'<path d="M{c},{c} L{x0:.1f},{y0:.1f} A{r},{r} 0 {large} 1 {x1:.1f},{y1:.1f} Z" '
-                     f'fill="{COLORS[i % len(COLORS)]}" stroke="#fff" stroke-width="3"/>')
+                     f'fill="{COLORS[i % len(COLORS)]}" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>')
         mid = (i + 0.5) * seg
         # 왼쪽 절반의 글자는 뒤집혀 보이므로 180도 돌려서 바로 읽히게 한다
-        rot, x = (mid - 90, c + r * 0.58) if mid <= 180 else (mid + 90, c - r * 0.58)
+        rot, x = (mid - 90, c + r * 0.56) if mid <= 180 else (mid + 90, c - r * 0.56)
         parts.append(f'<g transform="rotate({rot:.1f} {c} {c})"><text x="{x:.1f}" y="{c}" '
                      f'text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="700" '
-                     f'fill="#fff" font-family="sans-serif">{label(key)}</text></g>')
-    parts.append(f'<circle cx="{c}" cy="{c}" r="26" fill="#fff" stroke="#F26B3A" stroke-width="4"/>')
+                     f'fill="{TEXT}" font-family="sans-serif">{label(key)}</text></g>')
+    for k in range(len(items) * 3):  # 테두리의 작은 점 장식
+        a = math.radians(k * seg / 3)
+        parts.append(f'<circle cx="{c + (r + 8) * math.sin(a):.1f}" cy="{c - (r + 8) * math.cos(a):.1f}" r="3" fill="#FFB59A"/>')
+    parts.append(f'<circle cx="{c}" cy="{c}" r="28" fill="#fff" stroke="#FFD9C7" stroke-width="5"/>')
     parts.append(f'<text x="{c}" y="{c + 1}" text-anchor="middle" dominant-baseline="middle" font-size="22">🍚</text>')
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 {size} {size}">{"".join(parts)}</svg>'
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode()
@@ -55,11 +59,12 @@ def show_wheel(items: list, angle: float, nonce: str, animate: bool) -> None:
     st.markdown(f"""
 <style>
 @keyframes bm-spin-{nonce} {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate({angle:.1f}deg); }} }}
-.bm-wheel-box {{ position: relative; width: 320px; max-width: 100%; margin: 10px auto 4px; }}
-.bm-wheel-box img {{ width: 100%; display: block; {anim} }}
-.bm-pointer {{ position: absolute; top: -6px; left: 50%; transform: translateX(-50%); z-index: 2;
-  width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent;
-  border-top: 30px solid #3B2A20; filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }}
+.bm-wheel-box {{ position: relative; width: 340px; max-width: 100%; margin: 14px auto 4px; }}
+.bm-wheel-box img {{ width: 100%; display: block; border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(242,107,58,.18); {anim} }}
+.bm-pointer {{ position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 2;
+  width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent;
+  border-top: 28px solid #FF8A65; filter: drop-shadow(0 3px 3px rgba(0,0,0,.18)); }}
 </style>
 <div class="bm-wheel-box"><div class="bm-pointer"></div><img src="{wheel_svg(items)}" alt=""></div>
 """, unsafe_allow_html=True)
@@ -72,7 +77,7 @@ pick_key = lang_key("roulette_pick")
 if st.button(f"🎲 {t('roulette.random_pick', n=ROULETTE_MAX)}"):
     st.session_state[pick_key] = random.sample(dishes, min(ROULETTE_MAX, len(dishes)))
 picked = st.pills(t("roulette.pick"), dishes, selection_mode="multi", key=pick_key,
-                  format_func=lambda k: f"{label(k)} · {t('roulette.stores', n=counts[k])}")
+                  format_func=label)
 too_many = len(picked) > ROULETTE_MAX
 if too_many:
     st.warning(t("roulette.too_many", n=ROULETTE_MAX))
@@ -102,6 +107,7 @@ if spin and spin["items"] == list(picked):
 
     stores = df[df["category_sub"].isin(DISHES[key][1])].sort_values("distance_m")
     st.markdown(f"#### 📍 {t('roulette.nearby', dish=t(f'dish.{key}'), n=len(stores))}")
+    st.caption(t("roulette.nearby_note", cats=", ".join(DISHES[key][1])))
     render_grid(stores, "roulette", page_size=6, reset_on=spin["nonce"])
 elif 2 <= len(picked) <= ROULETTE_MAX:  # 돌리기 전: 고른 음식으로 만든 판 미리 보기
     show_wheel(list(picked), 0, "idle", False)
