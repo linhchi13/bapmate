@@ -334,8 +334,6 @@
   "bm.advantage.body": "- Built by international students → we know the users' needs\n- The more students review, the more unique the info becomes",
   "bm.partners.title": "⑨ Key partners",
   "bm.partners.body": "- Public Data Portal (store data, good-price stores)\n- OpenStreetMap\n- Restaurants near campus\n- International office & student associations (to be proposed)",
-  "project.bm_revenue_title": "Revenue model comparison",
-  "project.bm_revenue": "| Model | What | Pros | Watch out |\n|---|---|---|---|\n| Partner store ads | Shown at the top, marked as an ad | Easy to build | Must be labeled; never change ratings |\n| Student coupons | Coupon deals with stores, fee per use | Good for students and stores | Need to visit and pitch stores |\n| Sponsorship | International student support budgets | Stable income | Needs agreement with the university |\n| Stats reports | Anonymous dining trends of international students | No extra cost | Aggregated stats only, no personal data |\n\n➡️ **Priority**: grow users first (views, reviews), then start with student coupon partnerships.",
   "project.bm_roadmap_title": "Next steps",
   "project.bm_roadmap": "1. **Now (fall 2026)**: free service; grow views, members and reviews\n2. **Next semester**: more price & hours info, pilot coupon deals with nearby stores\n3. **Later**: expand to other universities (same code, just change the campus coordinates)",
   "tag.cheap": "💰 Good value",
